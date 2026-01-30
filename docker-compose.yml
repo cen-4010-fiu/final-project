@@ -1,0 +1,41 @@
+services:
+  # NOTE: Run with: docker compose up -d
+  swe-db-service:
+    image: postgres:17-bookworm
+    container_name: swe-db-container
+    restart: always
+    environment:
+      POSTGRES_USER: swe_user
+      POSTGRES_PASSWORD: swe_pw
+      POSTGRES_DB: swe_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swe_user -d swe_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - cen4010_postgres_data:/var/lib/postgresql/data
+
+  # NOTE: Run with: docker compose --profile containerized up
+  swe-api-service:
+    profiles: ["containerized"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swe-app
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgres://swe_user:swe_pw@swe-db:5432/swe_db
+      - NODE_ENV=development
+    depends_on:
+      swe-db-service:
+        condition: service_healthy
+    volumes:
+      - .:/usr/src/swe-app
+      - /usr/src/swe-app/node_modules
+
+volumes:
+  cen4010_postgres_data:
