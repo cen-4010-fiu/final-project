@@ -1,9 +1,9 @@
-import { OpenAPIHono } from "@hono/zod-openapi";
-import { Scalar } from "@scalar/hono-api-reference";
-import { errorHandler } from "@/shared/middleware/error-handler";
-import { logger } from "hono/logger";
-import features from "@/features";
-import { prettyJSON } from "hono/pretty-json";
+import { OpenAPIHono } from '@hono/zod-openapi';
+import { Scalar } from '@scalar/hono-api-reference';
+import { logger } from 'hono/logger';
+import { prettyJSON } from 'hono/pretty-json';
+import features from '@/features';
+import { errorHandler } from '@/shared/middleware/error-handler';
 
 export function createApp() {
   const app = new OpenAPIHono();
@@ -13,27 +13,27 @@ export function createApp() {
   app.use(logger());
   app.use(prettyJSON());
 
-  app.get("/health", (c) => c.json({ status: "ok" }));
+  app.get('/health', (c) => c.json({ status: 'ok' }));
 
   // Group all feature routes under `/api`
-  app.route("/api", features);
+  app.route('/api', features);
 
   // Holds our openapi json spec
-  app.doc("/openapi.json", {
-    openapi: "3.1.0",
+  app.doc('/openapi.json', {
+    openapi: '3.1.0',
     info: {
-      title: "CEN 4010 Final Project",
-      version: "1.0.0",
+      title: 'CEN 4010 Final Project',
+      version: '1.0.0',
     },
   });
 
   // Loads Scalar ui for our API
   app.get(
-    "/docs",
+    '/docs',
     Scalar({
-      url: "/openapi.json",
-      theme: "kepler",
-    }),
+      url: '/openapi.json',
+      theme: 'kepler',
+    })
   );
 
   return app;

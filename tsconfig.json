@@ -1,9 +1,7 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": [
-      "ESNext"
-    ],
+    "lib": ["ESNext"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -26,14 +24,8 @@
     "noPropertyAccessFromIndexSignature": false,
     // Aliases
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     }
   },
-  "include": [
-    "src",
-    "tests",
-    "drizzle.config.ts"
-  ]
+  "include": ["src", "tests", "drizzle.config.ts"]
 }
