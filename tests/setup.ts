@@ -1,7 +1,16 @@
-import { beforeEach } from 'bun:test';
-import { db, todos } from '@/shared/db';
+/**
+ * Test Setup
+ *
+ * Global setup that runs before each test file.
+ */
 
-// FIXME: I'm resetting the database for these dummy tests, but we shouldn't do this at all long term
+import { beforeEach } from 'bun:test';
+import { db } from '@/shared/db/client';
+import { users } from '@/shared/db/schema';
+
+/**
+ * Reset relevant tables before each test
+ */
 beforeEach(async () => {
-  await db.delete(todos);
+  await db.delete(users);
 });

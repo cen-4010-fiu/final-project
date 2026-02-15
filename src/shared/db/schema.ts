@@ -1,13 +1,27 @@
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+/**
+ * Database Schemas
+ *
+ * Central location for all Drizzle ORM table definitions.
+ * Run `bun run db:generate` after modifying to create migrations.
+ */
 
-// FIXME: todos example, delete for real features
-export const todos = pgTable('todos', {
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+
+/**
+ * Users table
+ *
+ * Stores user account information. Passwords are hashed via bcrypt
+ * before storage (handled in service layer).
+ */
+export const users = pgTable('users', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  title: text('title').notNull(),
-  description: text('description'),
-  completed: boolean('completed').default(false).notNull(),
+  username: text('username').notNull().unique(),
+  password: text('password').notNull(),
+  name: text('name'),
+  email: text('email'),
+  homeAddress: text('home_address'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
