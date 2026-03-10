@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it } from 'bun:test';
 import { eq } from 'drizzle-orm';
 import { createApp } from '@/app';
 import { db } from '@/shared/db/client';
-import { users } from '@/shared/db/schema';
+import { creditCards, users } from '@/shared/db/schema';
 
 const app = createApp();
 
@@ -43,8 +43,9 @@ async function createUser(data: {
   });
 }
 
-/** Reset users table before each test */
+/** Reset tables before each test */
 beforeEach(async () => {
+  await db.delete(creditCards);
   await db.delete(users);
 });
 
@@ -255,5 +256,148 @@ describe('PATCH /api/users/:username', () => {
 
     const body = (await res.json()) as UserResponse;
     expect(body.email).toBe('original@example.com');
+  });
+});
+
+// Helper to create credit card
+async function createCreditCard(
+  username: string,
+  data: {
+    cardNumber: string;
+    expiryDate: string;
+    cvv: string;
+    cardholderName: string;
+  }
+) {
+  return app.request(`/api/users/${username}/credit-cards`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+}
+
+describe('POST /api/users/:username/cards', () => {
+  it('creates credit card for existing user', async () => {
+    await createUser({ username: 'carduser', password: 'testpw1234' });
+
+    const res = await createCreditCard('carduser', {
+      cardNumber: '4532015112830366',
+      expiryDate: '12/30',
+      cvv: '123',
+      cardholderName: 'John Doe',
+    });
+
+    expect(res.status).toBe(201);
+
+    const body = (await res.json()) as {
+      id: string;
+      cardholderName: string;
+      lastFour: string;
+      expiryDate: string;
+    };
+
+    expect(body.cardholderName).toBe('John Doe');
+    expect(body.lastFour).toBe('0366');
+    expect(body.expiryDate).toBe('12/30');
+    expect('cardNumber' in body).toBe(false);
+    expect('cvv' in body).toBe(false);
+  });
+
+  it('returns 404 for non-existent user', async () => {
+    const res = await createCreditCard('ghostuser', {
+      cardNumber: '4532015112830366',
+      expiryDate: '12/30',
+      cvv: '123',
+      cardholderName: 'Ghost',
+    });
+
+    expect(res.status).toBe(404);
+  });
+
+  it('rejects invalid card number (15 digits)', async () => {
+    await createUser({ username: 'carduser', password: 'testpw1234' });
+
+    const res = await createCreditCard('carduser', {
+      cardNumber: '453201511283036', // 15 digits
+      expiryDate: '12/30',
+      cvv: '123',
+      cardholderName: 'John Doe',
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects expired card', async () => {
+    await createUser({ username: 'carduser', password: 'testpw1234' });
+
+    const res = await createCreditCard('carduser', {
+      cardNumber: '4532015112830366',
+      expiryDate: '01/20', // Expired
+      cvv: '123',
+      cardholderName: 'John Doe',
+    });
+
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects invalid expiry format', async () => {
+    await createUser({ username: 'carduser', password: 'testpw1234' });
+
+    const res = await createCreditCard('carduser', {
+      cardNumber: '4532015112830366',
+      expiryDate: '13/30', // Invalid month
+      cvv: '123',
+      cardholderName: 'John Doe',
+    });
+
+    expect(res.status).toBe(400);
+  });
+});
+
+describe('GET /api/users/:username/cards', () => {
+  it('returns list of credit cards', async () => {
+    await createUser({ username: 'carduser', password: 'testpw1234' });
+
+    await createCreditCard('carduser', {
+      cardNumber: '4111111111111111',
+      expiryDate: '12/30',
+      cvv: '123',
+      cardholderName: 'Card One',
+    });
+
+    await createCreditCard('carduser', {
+      cardNumber: '5555555555554444',
+      expiryDate: '06/28',
+      cvv: '456',
+      cardholderName: 'Card Two',
+    });
+
+    const res = await app.request('/api/users/carduser/cards');
+
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as Array<{
+      cardholderName: string;
+      lastFour: string;
+    }>;
+
+    expect(body).toHaveLength(2);
+    expect(body[0]?.lastFour).toBe('1111');
+    expect(body[1]?.lastFour).toBe('4444');
+  });
+
+  it('returns empty array for user with no cards', async () => {
+    await createUser({ username: 'nocards', password: 'testpw1234' });
+
+    const res = await app.request('/api/users/nocards/cards');
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual([]);
+  });
+
+  it('returns 404 for non-existent user', async () => {
+    const res = await app.request('/api/users/ghost/cards');
+    expect(res.status).toBe(404);
   });
 });

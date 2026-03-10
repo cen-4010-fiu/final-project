@@ -9,15 +9,17 @@
  * - PATCH  /api/users/:username  Update user profile
  */
 
-import { createRoute, OpenAPIHono, type z } from '@hono/zod-openapi';
+import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
 import {
+  CreateCreditCardSchema,
   CreateUserSchema,
+  CreditCardSchema,
   ErrorSchema,
   UpdateUserSchema,
   UsernameParam,
   UserSchema,
 } from '@/shared/schemas';
-import { userService } from './service';
+import { creditCardService, userService } from './service';
 
 const app = new OpenAPIHono();
 
@@ -147,6 +149,93 @@ app.openapi(
     }
 
     return c.json(sanitizeUser(user), 200);
+  }
+);
+
+// POST /api/users/:username/cards
+app.openapi(
+  createRoute({
+    method: 'post',
+    path: '/{username}/cards',
+    tags: ['Users', 'Credit Cards'],
+    summary: 'Add credit card to user profile',
+    description:
+      'Saves a credit card for the user. Stores only last 4 digits ' +
+      'readable; full number and CVV are hashed using bcrypt.',
+    request: {
+      params: UsernameParam,
+      body: {
+        content: {
+          'application/json': { schema: CreateCreditCardSchema },
+        },
+      },
+    },
+    responses: {
+      201: {
+        description: 'Credit card added successfully',
+        content: { 'application/json': { schema: CreditCardSchema } },
+      },
+      400: {
+        description: 'Invalid card data or expired card',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+      404: {
+        description: 'User not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const { username } = c.req.valid('param');
+    const body = c.req.valid('json');
+
+    const card = await creditCardService.create(username, body);
+
+    if (!card) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    return c.json(card, 201);
+  }
+);
+
+// GET /api/users/:username/cards
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{username}/cards',
+    tags: ['Users', 'Credit Cards'],
+    summary: 'List user credit cards',
+    description:
+      'Retrieves all saved credit cards for the user. ' +
+      'Only last 4 digits of card number are returned',
+    request: {
+      params: UsernameParam,
+    },
+    responses: {
+      200: {
+        description: 'List of credit cards',
+        content: {
+          'application/json': {
+            schema: z.array(CreditCardSchema),
+          },
+        },
+      },
+      404: {
+        description: 'User not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const { username } = c.req.valid('param');
+    const cards = await creditCardService.getByUsername(username);
+
+    if (cards === null) {
+      return c.json({ error: 'User not found' }, 404);
+    }
+
+    return c.json(cards, 200);
   }
 );
 
