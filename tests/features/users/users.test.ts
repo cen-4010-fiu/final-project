@@ -269,7 +269,7 @@ async function createCreditCard(
     cardholderName: string;
   }
 ) {
-  return app.request(`/api/users/${username}/credit-cards`, {
+  return app.request(`/api/users/${username}/cards`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
