@@ -12,6 +12,7 @@ export function createApp() {
 
   // Error message for empty / page for user to visit /docs instead
   app.notFound((c) => {
+    console.warn(`[404] ${c.req.method} ${c.req.path} →  Try /docs instead`);
     return c.json(
       {
         sucess: false,
