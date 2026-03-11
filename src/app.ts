@@ -10,6 +10,21 @@ export function createApp() {
 
   app.onError(errorHandler);
 
+  // Error message for empty / page for user to visit /docs instead
+  app.notFound((c) => {
+    return c.json(
+      {
+        sucess: false,
+        error: {
+          code: 404,
+          message: `Route ${c.req.method} ${c.req.path} not found`,
+          hint: 'Try to visit /docs instead',
+        },
+      },
+      404
+    );
+  });
+
   app.use(logger());
   app.use(prettyJSON());
 
