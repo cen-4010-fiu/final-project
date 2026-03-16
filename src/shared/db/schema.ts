@@ -55,3 +55,24 @@ export const creditCards = pgTable('credit_cards', {
     .$onUpdate(() => new Date())
     .notNull(),
 });
+
+/**
+ * User Orders table
+ *
+ * Stores transaction history for users.
+ *  - Card data will be fetched and not stored with/in orders>
+ *  - Item details could be additioned to order details later on.
+ */
+export const userOrders = pgTable('user_orders', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  cardUsed: text('card_used')
+    .notNull()
+    .references(() => creditCards.id, { onDelete: 'cascade' }),
+  transactionDate: timestamp('transaction_date').defaultNow().notNull(),
+  transactionAmount: text('transactionAmount'),
+});
