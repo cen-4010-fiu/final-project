@@ -6,8 +6,8 @@
  */
 
 import { eq } from 'drizzle-orm';
-import type { z } from 'zod';
-import { creditCards, db, users } from '@/shared/db';
+import { any, type z } from 'zod';
+import { creditCards, db, userOrders, users } from '@/shared/db';
 import type {
   CreateCreditCardSchema,
   CreateUserSchema,
@@ -199,5 +199,43 @@ export const creditCardService = {
       });
 
     return card || null;
+  },
+};
+
+/*
+ * User Order History Service
+ */
+
+export const orderHistoryService = {
+  /**
+   * Retrieves purchase history of user by username.
+   *
+   * @param username - The user's username
+   * @returns TBD
+   */
+  async getByUsername(username: string): Promise<Array<{
+    id: string;
+    cardUsed: string;
+    transactionDate: Date;
+    transactionAmount: string;
+  }> | null> {
+    // Verify user exists and get ID
+    const user = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.username, username))
+      .limit(1);
+
+    if (!user[0]) return null;
+
+    const orders = await db
+      .select({
+        id: userOrders.id,
+        cardUsed: userOrders.cardUsed,
+        transactionDate: userOrders.transactionDate,
+        transactionAmount: userOrders.transactionAmount,
+      })
+      .from(userOrders);
+    return orders;
   },
 };

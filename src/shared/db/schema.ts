@@ -74,5 +74,5 @@ export const userOrders = pgTable('user_orders', {
     .notNull()
     .references(() => creditCards.id, { onDelete: 'cascade' }),
   transactionDate: timestamp('transaction_date').defaultNow().notNull(),
-  transactionAmount: text('transactionAmount'),
+  transactionAmount: text('transactionAmount').notNull(),
 });
