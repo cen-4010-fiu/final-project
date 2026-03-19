@@ -30,42 +30,25 @@ id: text('id')
 });
 
 /**
- * Authors table
+ * Credit Cards table
  *
- * Stores author information including biography and publisher.
+ * Stores payment methods for users. Security note:
+ * - Only last 4 digits stored in plaintext for display
+ * - Full number and CVV are hashed, but this is insufficient IRL
+ * - In production, just use Stripe or another payment processor
  */
-export const authors = pgTable('authors', {
+export const creditCards = pgTable('credit_cards', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
-  firstName: text('first_name').notNull(),
-  lastName: text('last_name').notNull(),
-  biography: text('biography'),
-  publisher: text('publisher'),
-  createdAt: timestamp('created_at').defaultNow().notNull(),
-  updatedAt: timestamp('updated_at')
-    .defaultNow()
-    .$onUpdate(() => new Date())
-    .notNull(),
-});
-
-/**
- * Books table
- *
- * Stores book information. authorId is a foreign key to authors.
- */
-export const books = pgTable('books', {
-  isbn: text('isbn').primaryKey(),
-  name: text('name').notNull(),
-  description: text('description'),
-  price: numeric('price', { precision: 10, scale: 2 }).notNull(),
-  authorId: text('author_id')
+  userId: text('user_id')
     .notNull()
-    .references(() => authors.id),
-  genre: text('genre'),
-  publisher: text('publisher'),
-  yearPublished: integer('year_published'),
-  copiesSold: integer('copies_sold').default(0).notNull(),
+    .references(() => users.id, { onDelete: 'cascade' }),
+  cardholderName: text('cardholder_name').notNull(),
+  lastFour: text('last_four').notNull(),
+  cardNumberHash: text('card_number_hash').notNull(),
+  expiryDate: text('expiry_date').notNull(),
+  cvvHash: text('cvv_hash').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at')
     .defaultNow()
