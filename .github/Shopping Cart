@@ -1,0 +1,27 @@
+interface Book{
+    id: number;
+    title: string;
+    author: string;
+    price: number;
+}
+
+interface CartItem{
+    book: Book;
+    quantity: number;
+}
+
+class ShoppingCart{
+    private items: CartItem[] = [];
+
+    public addBook(book: Book): void {
+        const existingItem = this.items.findIndex(item => item.book.id === book.id);
+        if (existingItem > -1) {
+            this.items[existingItem].quantity += 1;
+        } else {
+            this.items.push({ book, quantity: 1 });
+        }
+
+        console.log(`Added "${book.title}" to the cart.`);
+    }
+}
+
