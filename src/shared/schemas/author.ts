@@ -1,9 +1,9 @@
 /**
-* Author Schemas
-*
-* Zod schemas for author-related request/response validation.
-* Integrated with OpenAPI for automatic documentation.
-*/
+ * Author Schemas
+ *
+ * Zod schemas for author-related request/response validation.
+ * Integrated with OpenAPI for automatic documentation.
+ */
 
 import { z } from '@hono/zod-openapi';
 import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
@@ -13,17 +13,17 @@ const baseSchema = createSelectSchema(authors);
 const baseInsertSchema = createInsertSchema(authors);
 
 /**
-* Public author representation
-*/
+ * Public author representation
+ */
 export const AuthorSchema = baseSchema.openapi('Author');
 
 /**
-* Author creation payload
-* @description Required: firstName, lastName
-* @description Optional: biography, publisher
-*/
+ * Author creation payload
+ * @description Required: firstName, lastName
+ * @description Optional: biography, publisher
+ */
 export const CreateAuthorSchema = baseInsertSchema
-.omit({
+  .omit({
     id: true,
     createdAt: true,
     updatedAt: true,

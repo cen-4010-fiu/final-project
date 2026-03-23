@@ -1,20 +1,20 @@
 /**
-* Database Schemas
-*
-* Central location for all Drizzle ORM table definitions.
-* Run `bun run db:generate` after modifying to create migrations.
-*/
+ * Database Schemas
+ *
+ * Central location for all Drizzle ORM table definitions.
+ * Run `bun run db:generate` after modifying to create migrations.
+ */
 
-import { integer, numeric, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { pgTable, text, timestamp } from 'drizzle-orm/pg-core';
 
 /**
-* Users table
-*
-* Stores user account information. Passwords are hashed via bcrypt
-* before storage (handled in service layer).
-*/
+ * Users table
+ *
+ * Stores user account information. Passwords are hashed via bcrypt
+ * before storage (handled in service layer).
+ */
 export const users = pgTable('users', {
-id: text('id')
+  id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   username: text('username').notNull().unique(),

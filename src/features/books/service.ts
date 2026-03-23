@@ -1,29 +1,26 @@
 /**
-* Book Service
-*
-* Business logic for book and author management.
-* Handles database operations for Feature 4 (Book Details).
-*/
+ * Book Service
+ *
+ * Business logic for book and author management.
+ * Handles database operations for Feature 4 (Book Details).
+ */
 
 import { eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db, authors, books } from '@/shared/db';
+import { authors, books, db } from '@/shared/db';
 import type { CreateAuthorSchema, CreateBookSchema } from '@/shared/schemas';
 
 type CreateAuthorInput = z.infer<typeof CreateAuthorSchema>;
 type CreateBookInput = z.infer<typeof CreateBookSchema>;
 
 export const bookService = {
-/**
-* Creates a new author
-* @param data - Author creation data
-* @returns Created author object
-*/
-async createAuthor(data: CreateAuthorInput) {
-    const [author] = await db
-      .insert(authors)
-      .values(data)
-      .returning();
+  /**
+   * Creates a new author
+   * @param data - Author creation data
+   * @returns Created author object
+   */
+  async createAuthor(data: CreateAuthorInput) {
+    const [author] = await db.insert(authors).values(data).returning();
 
     return author;
   },
@@ -49,10 +46,7 @@ async createAuthor(data: CreateAuthorInput) {
    * @returns Created book object
    */
   async createBook(data: CreateBookInput) {
-    const [book] = await db
-      .insert(books)
-      .values(data)
-      .returning();
+    const [book] = await db.insert(books).values(data).returning();
 
     return book;
   },

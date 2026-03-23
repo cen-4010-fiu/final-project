@@ -1,20 +1,20 @@
 /**
-* Book Routes
-*
-* REST API endpoints for Book Details feature (Feature 4).
-*
-* Endpoints:
-* - POST   /api/books            Create a book
-* - POST   /api/books/authors    Create an author
-*/
+ * Book Routes
+ *
+ * REST API endpoints for Book Details feature (Feature 4).
+ *
+ * Endpoints:
+ * - POST   /api/books            Create a book
+ * - POST   /api/books/authors    Create an author
+ */
 
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import {
-AuthorSchema,
-BookSchema,
-CreateAuthorSchema,
-CreateBookSchema,
-ErrorSchema,
+  AuthorSchema,
+  BookSchema,
+  CreateAuthorSchema,
+  CreateBookSchema,
+  ErrorSchema,
 } from '@/shared/schemas';
 import { bookService } from './service';
 

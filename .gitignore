@@ -140,3 +140,7 @@ vite.config.ts.timestamp-*
 
 # macos
 .DS_STORE/
+
+# editors
+.idea/
+.vs_code/

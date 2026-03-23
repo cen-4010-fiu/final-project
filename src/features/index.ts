@@ -1,6 +1,6 @@
 import { OpenAPIHono } from '@hono/zod-openapi';
-import users from './users/routes';
 import books from './books/routes';
+import users from './users/routes';
 
 const app = new OpenAPIHono();
 
