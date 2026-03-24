@@ -11,6 +11,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
 } from 'drizzle-orm/pg-core';
 
 /**
@@ -104,4 +105,49 @@ export const books = pgTable('books', {
     .defaultNow()
     .$onUpdate(() => new Date())
     .notNull(),
+});
+
+/**
+ * Book Ratings table
+ *
+ * Stores 1–5 star ratings submitted by users for books.
+ * A user can only rate a given book once (unique constraint on userId + isbn).
+ * Ratings are immutable — no update endpoint exists.
+ */
+export const bookRatings = pgTable(
+  'book_ratings',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+    userId: text('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    isbn: text('isbn')
+      .notNull()
+      .references(() => books.isbn, { onDelete: 'cascade' }),
+    rating: integer('rating').notNull(),
+    createdAt: timestamp('created_at').defaultNow().notNull(),
+  },
+  (t) => [unique('book_ratings_user_isbn_unique').on(t.userId, t.isbn)]
+);
+
+/**
+ * Book Comments table
+ *
+ * Stores free-text comments submitted by users for books.
+ * Comments are immutable — no update endpoint exists.
+ */
+export const bookComments = pgTable('book_comments', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  isbn: text('isbn')
+    .notNull()
+    .references(() => books.isbn, { onDelete: 'cascade' }),
+  comment: text('comment').notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
 });
