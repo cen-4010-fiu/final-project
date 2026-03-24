@@ -17,6 +17,9 @@ const baseInsertSchema = createInsertSchema(books);
  */
 export const BookSchema = baseSchema.openapi('Book');
 
+/** List of books (used for author → books lookup) */
+export const BookListSchema = z.array(BookSchema).openapi('BookList');
+
 /**
  * Book creation payload
  * @description Required: isbn, name, price, authorId
