@@ -1,0 +1,37 @@
+interface Book {
+    id: number;
+    title: string;
+    price: number;
+    author: string;
+}
+
+interface CartItem {
+    book: Book;
+    quantity: number;
+}
+
+class ShoppingCart {
+    private items: CartItem[] = [];
+
+    addBook(book: Book, quantity: number = 1): void {
+        const existingItem = this.items.find(item => item.book.id === book.id);
+        if (existingItem) {
+            existingItem.quantity += quantity;
+        } else {
+            this.items.push({ book, quantity });
+        }
+    }
+
+    removeBook(bookId: number): void {
+        this.items = this.items.filter(item => item.book.id !== bookId);
+    }
+    
+    getTotalPrice(): number {
+        return this.items.reduce((total, item) => total + item.book.price * item.quantity, 0);
+    }
+
+    getItems(): CartItem[] {
+        return this.items;
+    }
+
+}
