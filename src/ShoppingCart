@@ -1,5 +1,5 @@
 interface Book {
-    id: number;
+    id: string;
     title: string;
     price: number;
     author: string;
@@ -22,7 +22,7 @@ class ShoppingCart {
         }
     }
 
-    removeBook(bookId: number): void {
+    removeBook(bookId: string): void {
         this.items = this.items.filter(item => item.book.id !== bookId);
     }
     
