@@ -182,3 +182,36 @@ export const shoppingCartItems = pgTable('shopping_cart_items', {
     .notNull()
     .references(() => books.isbn),
 });
+
+/**
+ * Wish List table
+ *
+ * Uniquely named wish list
+ * FIXME: Limit to three per user via constraints
+ */
+export const wishList = pgTable('wish_list', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  name: text('name').notNull().unique(),
+});
+
+/**
+ * Wish List Items table
+ *
+ * Stores the actual items in a wish list at moment time
+ */
+export const wishListItems = pgTable('wish_list_items', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  wishListId: text('wish_list_id')
+    .notNull()
+    .references(() => shoppingCart.id),
+  bookIsbn: text('book_isbn')
+    .notNull()
+    .references(() => books.isbn),
+});
