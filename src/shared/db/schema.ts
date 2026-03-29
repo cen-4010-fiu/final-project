@@ -159,12 +159,12 @@ export const bookComments = pgTable('book_comments', {
  */
 export const shoppingCart = pgTable('shopping_cart', {
   id: text('id')
-      .primaryKey()
-      .$defaultFn(() => crypto.randomUUID()),
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
-          .notNull()
-          .references(() => users.id, { onDelete: 'cascade' })
-})
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+});
 
 /**
  * Shopping Cart Items table
@@ -172,7 +172,13 @@ export const shoppingCart = pgTable('shopping_cart', {
  * Stores the actual items in a shopping cart at any given time
  */
 export const shoppingCartItems = pgTable('shopping_cart_items', {
-  id: text('id').primaryKey().$defaultFn(()=> crypto.randomUUID()),
-  shoppingCartId: text('shopping_cart_id').notNull().references(() => shoppingCart.id),
-  bookIsbn: text('book_isbn').notNull().references(() => books.isbn)
-})
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  shoppingCartId: text('shopping_cart_id')
+    .notNull()
+    .references(() => shoppingCart.id),
+  bookIsbn: text('book_isbn')
+    .notNull()
+    .references(() => books.isbn),
+});
