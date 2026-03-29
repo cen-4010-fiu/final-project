@@ -52,6 +52,21 @@ export const bookService = {
   },
 
   /**
+   * Checks if a book with the given ISBN already exists
+   * @param isbn - ISBN to check
+   * @returns True if ISBN exists
+   */
+  async isbnExists(isbn: string) {
+    const [row] = await db
+      .select({ isbn: books.isbn })
+      .from(books)
+      .where(eq(books.isbn, isbn))
+      .limit(1);
+
+    return !!row;
+  },
+
+  /**
    * Retrieves a book by its ISBN
    * @param isbn - ISBN of the book
    * @returns Book object or undefined if not found
@@ -73,20 +88,5 @@ export const bookService = {
    */
   async getBooksByAuthorId(authorId: string) {
     return db.select().from(books).where(eq(books.authorId, authorId));
-  },
-
-  /**
-   * Checks if a book with the given ISBN already exists
-   * @param isbn - ISBN to check
-   * @returns True if ISBN exists
-   */
-  async isbnExists(isbn: string) {
-    const [row] = await db
-      .select({ isbn: books.isbn })
-      .from(books)
-      .where(eq(books.isbn, isbn))
-      .limit(1);
-
-    return !!row;
   },
 };

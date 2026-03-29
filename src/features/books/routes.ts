@@ -4,22 +4,18 @@
  * REST API endpoints for Book Details feature (Feature 4).
  *
  * Endpoints:
- * - POST   /api/books                      Create a book
- * - GET    /api/books/:isbn                Retrieve a book by ISBN
- * - POST   /api/books/authors             Create an author
- * - GET    /api/books/authors/:authorId   Retrieve all books by an author
+ * - POST   /api/books                          Create a book
+ * - POST   /api/books/authors                  Create an author
+ * - GET    /api/books/authors/:authorId/books  Get books by author
+ * - GET    /api/books/:isbn                    Get a book by ISBN
  */
-
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import {
-  AuthorIdParam,
   AuthorSchema,
-  BookListSchema,
   BookSchema,
   CreateAuthorSchema,
   CreateBookSchema,
   ErrorSchema,
-  IsbnParam,
 } from '@/shared/schemas';
 import { bookService } from './service';
 
@@ -51,90 +47,10 @@ app.openapi(
   async (c) => {
     const body = c.req.valid('json');
     const author = await bookService.createAuthor(body);
-
     if (!author) {
       return c.json({ error: 'Failed to create author' }, 500);
     }
-
     return c.json(author, 201);
-  }
-);
-
-// GET /api/books/authors/:authorId
-app.openapi(
-  createRoute({
-    method: 'get',
-    path: '/authors/{authorId}',
-    tags: ['Books'],
-    summary: 'Get books by author',
-    description: 'Returns all books associated with the given author id.',
-    request: {
-      params: AuthorIdParam,
-    },
-    responses: {
-      200: {
-        description: 'List of books for the author',
-        content: { 'application/json': { schema: BookListSchema } },
-      },
-      404: {
-        description: 'Author not found',
-        content: { 'application/json': { schema: ErrorSchema } },
-      },
-      500: {
-        description: 'Failed to retrieve books',
-        content: { 'application/json': { schema: ErrorSchema } },
-      },
-    },
-  }),
-  async (c) => {
-    const { authorId } = c.req.valid('param');
-
-    const author = await bookService.getAuthorById(authorId);
-    if (!author) {
-      return c.json({ error: 'Author not found' }, 404);
-    }
-
-    const bookList = await bookService.getBooksByAuthorId(authorId);
-
-    return c.json(bookList, 200);
-  }
-);
-
-// GET /api/books/:isbn
-app.openapi(
-  createRoute({
-    method: 'get',
-    path: '/{isbn}',
-    tags: ['Books'],
-    summary: 'Get a book by ISBN',
-    description: 'Retrieves the full details of a book identified by its ISBN.',
-    request: {
-      params: IsbnParam,
-    },
-    responses: {
-      200: {
-        description: 'Book details',
-        content: { 'application/json': { schema: BookSchema } },
-      },
-      404: {
-        description: 'Book not found',
-        content: { 'application/json': { schema: ErrorSchema } },
-      },
-      500: {
-        description: 'Failed to retrieve book',
-        content: { 'application/json': { schema: ErrorSchema } },
-      },
-    },
-  }),
-  async (c) => {
-    const { isbn } = c.req.valid('param');
-
-    const book = await bookService.getBookByIsbn(isbn);
-    if (!book) {
-      return c.json({ error: 'Book not found' }, 404);
-    }
-
-    return c.json(book, 200);
   }
 );
 
@@ -168,23 +84,77 @@ app.openapi(
   }),
   async (c) => {
     const body = c.req.valid('json');
-
     if (await bookService.isbnExists(body.isbn)) {
       return c.json({ error: 'A book with that ISBN already exists' }, 400);
     }
-
     const authorExists = await bookService.getAuthorById(body.authorId);
     if (!authorExists) {
       return c.json({ error: 'Author not found' }, 400);
     }
-
     const book = await bookService.createBook(body);
-
     if (!book) {
       return c.json({ error: 'Failed to create book' }, 500);
     }
-
     return c.json(book, 201);
+  }
+);
+
+// GET /api/books/authors/:authorId/books  ← must be before /:isbn
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/authors/{authorId}/books',
+    tags: ['Books'],
+    summary: 'Get books by author',
+    description: 'Returns all books written by the specified author.',
+    responses: {
+      200: {
+        description: 'List of books',
+        content: { 'application/json': { schema: BookSchema.array() } },
+      },
+      404: {
+        description: 'Author not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const authorId = c.req.param('authorId');
+    const author = await bookService.getAuthorById(authorId);
+    if (!author) {
+      return c.json({ error: 'Author not found' }, 404);
+    }
+    const books = await bookService.getBooksByAuthorId(authorId);
+    return c.json(books, 200);
+  }
+);
+
+// GET /api/books/:isbn  ← must be after all specific routes
+app.openapi(
+  createRoute({
+    method: 'get',
+    path: '/{isbn}',
+    tags: ['Books'],
+    summary: 'Get a book by ISBN',
+    description: 'Returns the book with the specified ISBN.',
+    responses: {
+      200: {
+        description: 'Book found',
+        content: { 'application/json': { schema: BookSchema } },
+      },
+      404: {
+        description: 'Book not found',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
+    },
+  }),
+  async (c) => {
+    const isbn = c.req.param('isbn');
+    const book = await bookService.getBookByIsbn(isbn);
+    if (!book) {
+      return c.json({ error: 'Book not found' }, 404);
+    }
+    return c.json(book, 200);
   }
 );
 
