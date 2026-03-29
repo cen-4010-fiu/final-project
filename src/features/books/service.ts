@@ -52,6 +52,30 @@ export const bookService = {
   },
 
   /**
+   * Retrieves a book by its ISBN
+   * @param isbn - ISBN of the book
+   * @returns Book object or undefined if not found
+   */
+  async getBookByIsbn(isbn: string) {
+    const [book] = await db
+      .select()
+      .from(books)
+      .where(eq(books.isbn, isbn))
+      .limit(1);
+
+    return book;
+  },
+
+  /**
+   * Retrieves all books written by a given author
+   * @param authorId - UUID of the author
+   * @returns Array of book objects (may be empty)
+   */
+  async getBooksByAuthorId(authorId: string) {
+    return db.select().from(books).where(eq(books.authorId, authorId));
+  },
+
+  /**
    * Checks if a book with the given ISBN already exists
    * @param isbn - ISBN to check
    * @returns True if ISBN exists
