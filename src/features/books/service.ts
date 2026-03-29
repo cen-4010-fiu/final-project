@@ -66,7 +66,7 @@ export const bookService = {
     return !!row;
   },
 
-    /**
+  /**
    * Retrieves a book by its ISBN
    * @param isbn - ISBN of the book
    * @returns Book object or undefined if not found
