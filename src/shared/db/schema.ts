@@ -151,3 +151,28 @@ export const bookComments = pgTable('book_comments', {
   comment: text('comment').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+/**
+ * Shopping Cart table
+ *
+ * Stores a users current shopping cart
+ */
+export const shoppingCart = pgTable('shopping_cart', {
+  id: text('id')
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+          .notNull()
+          .references(() => users.id, { onDelete: 'cascade' })
+})
+
+/**
+ * Shopping Cart Items table
+ *
+ * Stores the actual items in a shopping cart at any given time
+ */
+export const shoppingCartItems = pgTable('shopping_cart_items', {
+  id: text('id').primaryKey().$defaultFn(()=> crypto.randomUUID()),
+  shoppingCartId: text('shopping_cart_id').notNull().references(() => shoppingCart.id),
+  bookIsbn: text('book_isbn').notNull().references(() => books.isbn)
+})
