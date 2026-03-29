@@ -189,14 +189,14 @@ export const shoppingCartItems = pgTable('shopping_cart_items', {
  * Uniquely named wish list
  * FIXME: Limit to three per user via constraints
  */
- export const wishList = pgTable('wish_list', {
+export const wishList = pgTable('wish_list', {
   id: text('id')
     .primaryKey()
     .$defaultFn(() => crypto.randomUUID()),
   userId: text('user_id')
     .notNull()
     .references(() => users.id, { onDelete: 'cascade' }),
-  name: text('name').notNull().unique()
+  name: text('name').notNull().unique(),
 });
 
 /**
