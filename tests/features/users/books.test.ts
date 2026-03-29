@@ -5,7 +5,7 @@
 * Tests run against a real database (reset before each test).
 */
 
-import {beforeEach, describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { createApp } from '@/app';
 import { db } from '@/shared/db/client';
 import { authors, books } from '@/shared/db/schema';
@@ -14,33 +14,33 @@ const app = createApp();
 
 /** Author response shape */
 interface AuthorResponse {
-id: string;
-firstName: string;
-lastName: string;
-biography: string | null;
-publisher: string | null;
-createdAt: string;
-updatedAt: string;
+  id: string;
+  firstName: string;
+  lastName: string;
+  biography: string | null;
+  publisher: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Book response shape */
 interface BookResponse {
-isbn: string;
-name: string;
-description: string | null;
-price: string;
-authorId: string;
-genre: string | null;
-publisher: string | null;
-yearPublished: number | null;
-copiesSold: number;
-createdAt: string;
-updatedAt: string;
+  isbn: string;
+  name: string;
+  description: string | null;
+  price: string;
+  authorId: string;
+  genre: string | null;
+  publisher: string | null;
+  yearPublished: number | null;
+  copiesSold: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 /** Error response shape */
 interface ErrorResponse {
-error: string;
+  error: string;
 }
 
 /** Helper to create an author via API */
@@ -151,7 +151,10 @@ describe('POST /api/books/authors', () => {
 // POST /api/books
 describe('POST /api/books', () => {
   it('creates book with all fields', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     const res = await createBook({
@@ -181,7 +184,10 @@ describe('POST /api/books', () => {
   });
 
   it('creates book with required fields only', async () => {
-    const authorRes = await createAuthor({ firstName: 'Jane', lastName: 'Austen' });
+    const authorRes = await createAuthor({
+      firstName: 'Jane',
+      lastName: 'Austen',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     const res = await createBook({
@@ -201,7 +207,10 @@ describe('POST /api/books', () => {
   });
 
   it('rejects duplicate ISBN', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     await createBook({
@@ -239,7 +248,10 @@ describe('POST /api/books', () => {
   });
 
   it('rejects invalid price format', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     const res = await createBook({
@@ -253,7 +265,10 @@ describe('POST /api/books', () => {
   });
 
   it('rejects ISBN shorter than 10 characters', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     const res = await createBook({
@@ -270,7 +285,10 @@ describe('POST /api/books', () => {
 // GET /api/books/:isbn
 describe('GET /api/books/:isbn', () => {
   it('returns existing book', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     await createBook({
@@ -303,11 +321,24 @@ describe('GET /api/books/:isbn', () => {
 // GET /api/books/authors/:authorId/books
 describe('GET /api/books/authors/:authorId/books', () => {
   it('returns list of books for an author', async () => {
-    const authorRes = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
-    await createBook({ isbn: '9780451524935', name: '1984', price: '12.99', authorId: author.id });
-    await createBook({ isbn: '9780141036144', name: 'Animal Farm', price: '8.99', authorId: author.id });
+    await createBook({
+      isbn: '9780451524935',
+      name: '1984',
+      price: '12.99',
+      authorId: author.id,
+    });
+    await createBook({
+      isbn: '9780141036144',
+      name: 'Animal Farm',
+      price: '8.99',
+      authorId: author.id,
+    });
 
     const res = await app.request(`/api/books/authors/${author.id}/books`);
 
@@ -320,7 +351,10 @@ describe('GET /api/books/authors/:authorId/books', () => {
   });
 
   it('returns empty array for author with no books', async () => {
-    const authorRes = await createAuthor({ firstName: 'Jane', lastName: 'Austen' });
+    const authorRes = await createAuthor({
+      firstName: 'Jane',
+      lastName: 'Austen',
+    });
     const author = (await authorRes.json()) as AuthorResponse;
 
     const res = await app.request(`/api/books/authors/${author.id}/books`);
@@ -332,7 +366,9 @@ describe('GET /api/books/authors/:authorId/books', () => {
   });
 
   it('returns 404 for non-existent author', async () => {
-    const res = await app.request('/api/books/authors/00000000-0000-0000-0000-000000000000/books');
+    const res = await app.request(
+      '/api/books/authors/00000000-0000-0000-0000-000000000000/books'
+    );
 
     expect(res.status).toBe(404);
 
@@ -341,14 +377,30 @@ describe('GET /api/books/authors/:authorId/books', () => {
   });
 
   it('only returns books belonging to the specified author', async () => {
-    const authorRes1 = await createAuthor({ firstName: 'George', lastName: 'Orwell' });
+    const authorRes1 = await createAuthor({
+      firstName: 'George',
+      lastName: 'Orwell',
+    });
     const author1 = (await authorRes1.json()) as AuthorResponse;
 
-    const authorRes2 = await createAuthor({ firstName: 'Jane', lastName: 'Austen' });
+    const authorRes2 = await createAuthor({
+      firstName: 'Jane',
+      lastName: 'Austen',
+    });
     const author2 = (await authorRes2.json()) as AuthorResponse;
 
-    await createBook({ isbn: '9780451524935', name: '1984', price: '12.99', authorId: author1.id });
-    await createBook({ isbn: '9780141439518', name: 'Pride and Prejudice', price: '9.99', authorId: author2.id });
+    await createBook({
+      isbn: '9780451524935',
+      name: '1984',
+      price: '12.99',
+      authorId: author1.id,
+    });
+    await createBook({
+      isbn: '9780141439518',
+      name: 'Pride and Prejudice',
+      price: '9.99',
+      authorId: author2.id,
+    });
 
     const res = await app.request(`/api/books/authors/${author1.id}/books`);
     const body = (await res.json()) as BookResponse[];
