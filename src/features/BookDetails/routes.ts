@@ -1,6 +1,7 @@
+
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
-import { bookDetailsService } from './service';
 import { CreateAuthorSchema, CreateBookSchema } from '@/shared/schemas';
+import { bookDetailsService } from './service';
 
 const app = new OpenAPIHono();
 
@@ -19,16 +20,6 @@ const bookResponseSchema = z.object({
   publisher: z.string(),
   yearPublished: z.number(),
   copiesSold: z.number(),
-  createdAt: z.union([z.string(), z.date()]).optional(),
-  updatedAt: z.union([z.string(), z.date()]).optional(),
-});
-
-const authorResponseSchema = z.object({
-  id: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  biography: z.string(),
-  publisher: z.string(),
   createdAt: z.union([z.string(), z.date()]).optional(),
   updatedAt: z.union([z.string(), z.date()]).optional(),
 });
