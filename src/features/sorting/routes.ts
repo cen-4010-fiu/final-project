@@ -1,31 +1,16 @@
-import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
-import { DiscountBooksByPublisherSchema } from '@/shared/schemas';
-import { bookBrowsingService } from './service';
+import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
+import {
+  BookListSchema,
+  DiscountBooksByPublisherSchema,
+  ErrorSchema,
+  GenreParam,
+  MinimumRatingParam,
+  RatedBookListSchema,
+  TopSellerListSchema,
+} from '@/shared/schemas';
+import { bookBrowsingService } from './services';
 
 const app = new OpenAPIHono();
-
-const errorSchema = z.object({
-  message: z.string(),
-});
-
-const bookResponseSchema = z.object({
-  id: z.string(),
-  isbn: z.string(),
-  name: z.string(),
-  description: z.string(),
-  price: z.number(),
-  authorId: z.string(),
-  genre: z.string(),
-  publisher: z.string(),
-  yearPublished: z.number(),
-  copiesSold: z.number(),
-  createdAt: z.union([z.string(), z.date()]).optional(),
-  updatedAt: z.union([z.string(), z.date()]).optional(),
-});
-
-const ratedBookResponseSchema = bookResponseSchema.extend({
-  averageRating: z.number(),
-});
 
 const getBooksByGenreRoute = createRoute({
   method: 'get',
@@ -34,18 +19,14 @@ const getBooksByGenreRoute = createRoute({
   summary: 'Get books by genre',
   description: 'Retrieves all books for a specific genre.',
   request: {
-    params: z.object({
-      genre: z.string().openapi({
-        example: 'Fantasy',
-      }),
-    }),
+    params: GenreParam,
   },
   responses: {
     200: {
       description: 'List of books by genre',
       content: {
         'application/json': {
-          schema: z.array(bookResponseSchema),
+          schema: BookListSchema,
         },
       },
     },
@@ -70,7 +51,7 @@ const getTopSellersRoute = createRoute({
       description: 'Top-selling books',
       content: {
         'application/json': {
-          schema: z.array(bookResponseSchema),
+          schema: TopSellerListSchema,
         },
       },
     },
@@ -91,18 +72,14 @@ const getBooksByMinimumRatingRoute = createRoute({
   description:
     'Retrieves books whose average rating is greater than or equal to the given value.',
   request: {
-    params: z.object({
-      rating: z.coerce.number().openapi({
-        example: 4,
-      }),
-    }),
+    params: MinimumRatingParam,
   },
   responses: {
     200: {
       description: 'List of books filtered by minimum rating',
       content: {
         'application/json': {
-          schema: z.array(ratedBookResponseSchema),
+          schema: RatedBookListSchema,
         },
       },
     },
@@ -110,7 +87,7 @@ const getBooksByMinimumRatingRoute = createRoute({
       description: 'Invalid request',
       content: {
         'application/json': {
-          schema: errorSchema,
+          schema: ErrorSchema,
         },
       },
     },
@@ -120,19 +97,11 @@ const getBooksByMinimumRatingRoute = createRoute({
 app.openapi(getBooksByMinimumRatingRoute, async (c) => {
   try {
     const { rating } = c.req.valid('param');
-
-    if (rating < 0 || rating > 5) {
-      return c.json({ message: 'Rating must be between 0 and 5.' }, 400);
-    }
-
     const books = await bookBrowsingService.getBooksByMinimumRating(rating);
 
     return c.json(books, 200);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to fetch books';
-
-    return c.json({ message }, 400);
+  } catch {
+    return c.json({ error: 'Failed to fetch books' }, 400);
   }
 });
 
@@ -160,7 +129,7 @@ const discountBooksByPublisherRoute = createRoute({
       description: 'Invalid request',
       content: {
         'application/json': {
-          schema: errorSchema,
+          schema: ErrorSchema,
         },
       },
     },
@@ -174,11 +143,8 @@ app.openapi(discountBooksByPublisherRoute, async (c) => {
     await bookBrowsingService.discountBooksByPublisher(data);
 
     return c.body(null, 204);
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : 'Failed to apply discount';
-
-    return c.json({ message }, 400);
+  } catch {
+    return c.json({ error: 'Failed to apply discount' }, 400);
   }
 });
 

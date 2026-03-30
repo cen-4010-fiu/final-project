@@ -22,23 +22,7 @@ export const bookBrowsingService = {
    * @returns Array of books
    */
   async getBooksByGenre(genre: string) {
-    const result = await db
-      .select({
-        id: books.id,
-        isbn: books.isbn,
-        name: books.name,
-        description: books.description,
-        price: books.price,
-        authorId: books.authorId,
-        genre: books.genre,
-        publisher: books.publisher,
-        yearPublished: books.yearPublished,
-        copiesSold: books.copiesSold,
-        createdAt: books.createdAt,
-        updatedAt: books.updatedAt,
-      })
-      .from(books)
-      .where(eq(books.genre, genre));
+    const result = await db.select().from(books).where(eq(books.genre, genre));
 
     return result;
   },
@@ -50,20 +34,7 @@ export const bookBrowsingService = {
    */
   async getTopSellers() {
     const result = await db
-      .select({
-        id: books.id,
-        isbn: books.isbn,
-        name: books.name,
-        description: books.description,
-        price: books.price,
-        authorId: books.authorId,
-        genre: books.genre,
-        publisher: books.publisher,
-        yearPublished: books.yearPublished,
-        copiesSold: books.copiesSold,
-        createdAt: books.createdAt,
-        updatedAt: books.updatedAt,
-      })
+      .select()
       .from(books)
       .orderBy(desc(books.copiesSold))
       .limit(10);
@@ -98,7 +69,7 @@ export const bookBrowsingService = {
         averageRating: averageRatingExpr,
       })
       .from(books)
-      .leftJoin(bookRatings, eq(bookRatings.bookId, books.id))
+      .leftJoin(bookRatings, eq(bookRatings.isbn, books.isbn))
       .groupBy(
         books.id,
         books.isbn,
@@ -128,25 +99,15 @@ export const bookBrowsingService = {
    * @returns Updated books
    */
   async discountBooksByPublisher(data: DiscountBooksByPublisherType) {
-    if (data.discountPercent < 0 || data.discountPercent > 100) {
-      throw new Error('Discount percent must be between 0 and 100.');
-    }
-
     const multiplier = (100 - data.discountPercent) / 100;
 
     const updatedBooks = await db
       .update(books)
       .set({
-        price: sql`ROUND(${books.price} * ${multiplier}, 2)`,
+        price: sql`ROUND(CAST(${books.price} AS numeric) * ${multiplier}, 2)`,
       })
       .where(eq(books.publisher, data.publisher))
-      .returning({
-        id: books.id,
-        isbn: books.isbn,
-        name: books.name,
-        price: books.price,
-        publisher: books.publisher,
-      });
+      .returning();
 
     return updatedBooks;
   },
