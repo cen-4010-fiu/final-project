@@ -1,18 +1,18 @@
 /**
- * Comments Service
+ * Purchases Service
  *
- * Business logic for book comment management.
- * Handles database operations for Feature 5 (Book Rating and Commenting).
+ * Business logic for purchase management.
+ * Tracks which users have purchased which books.
  */
 
-import { and, asc, eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { bookComments, books, db, purchases, users } from '@/shared/db';
-import type { CreateCommentSchema } from '@/shared/schemas';
+import { books, db, purchases, users } from '@/shared/db';
+import type { CreatePurchaseSchema } from '@/shared/schemas';
 
-type CreateCommentInput = z.infer<typeof CreateCommentSchema>;
+type CreatePurchaseInput = z.infer<typeof CreatePurchaseSchema>;
 
-export const commentService = {
+export const purchaseService = {
   /**
    * Checks if a book with the given ISBN exists
    * @param isbn - ISBN of the book
@@ -44,6 +44,23 @@ export const commentService = {
   },
 
   /**
+   * Creates a new purchase record
+   * @param data - Purchase creation data (userId, isbn)
+   */
+  async create(data: CreatePurchaseInput): Promise<void> {
+    await db.insert(purchases).values(data);
+  },
+
+  /**
+   * Retrieves all purchases for a user
+   * @param userId - UUID of the user
+   * @returns Array of purchase objects
+   */
+  async getByUserId(userId: string) {
+    return db.select().from(purchases).where(eq(purchases.userId, userId));
+  },
+
+  /**
    * Checks if a user has purchased a specific book
    * @param userId - UUID of the user
    * @param isbn - ISBN of the book
@@ -57,26 +74,5 @@ export const commentService = {
       .limit(1);
 
     return !!row;
-  },
-
-  /**
-   * Creates a new comment for a book
-   * @param data - Comment creation data (userId, isbn, comment)
-   */
-  async create(data: CreateCommentInput): Promise<void> {
-    await db.insert(bookComments).values(data);
-  },
-
-  /**
-   * Retrieves all comments for a book ordered by creation time ascending
-   * @param isbn - ISBN of the book
-   * @returns Array of comment objects (empty array if none exist)
-   */
-  async getByIsbn(isbn: string) {
-    return db
-      .select()
-      .from(bookComments)
-      .where(eq(bookComments.isbn, isbn))
-      .orderBy(asc(bookComments.createdAt));
   },
 };

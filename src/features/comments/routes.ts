@@ -34,6 +34,10 @@ app.openapi(
     },
     responses: {
       201: { description: 'Comment created successfully' },
+      403: {
+        description: 'User has not purchased this book',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
       404: {
         description: 'Book or user not found',
         content: { 'application/json': { schema: ErrorSchema } },
@@ -53,6 +57,10 @@ app.openapi(
 
     if (!(await commentService.userExists(body.userId))) {
       return c.json({ error: 'User not found' }, 404);
+    }
+
+    if (!(await commentService.hasPurchased(body.userId, body.isbn))) {
+      return c.json({ error: 'User has not purchased this book' }, 403);
     }
 
     await commentService.create(body);

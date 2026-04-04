@@ -7,7 +7,7 @@
 
 import { and, avg, eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { bookRatings, books, db, users } from '@/shared/db';
+import { bookRatings, books, db, purchases, users } from '@/shared/db';
 import type { CreateRatingSchema } from '@/shared/schemas';
 
 type CreateRatingInput = z.infer<typeof CreateRatingSchema>;
@@ -54,6 +54,22 @@ export const ratingService = {
       .select({ id: bookRatings.id })
       .from(bookRatings)
       .where(and(eq(bookRatings.userId, userId), eq(bookRatings.isbn, isbn)))
+      .limit(1);
+
+    return !!row;
+  },
+
+  /**
+   * Checks if a user has purchased a specific book
+   * @param userId - UUID of the user
+   * @param isbn - ISBN of the book
+   * @returns True if the user has purchased the book
+   */
+  async hasPurchased(userId: string, isbn: string): Promise<boolean> {
+    const [row] = await db
+      .select({ id: purchases.id })
+      .from(purchases)
+      .where(and(eq(purchases.userId, userId), eq(purchases.isbn, isbn)))
       .limit(1);
 
     return !!row;

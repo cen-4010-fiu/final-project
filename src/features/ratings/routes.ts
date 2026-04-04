@@ -38,6 +38,10 @@ app.openapi(
         description: 'User has already rated this book',
         content: { 'application/json': { schema: ErrorSchema } },
       },
+      403: {
+        description: 'User has not purchased this book',
+        content: { 'application/json': { schema: ErrorSchema } },
+      },
       404: {
         description: 'Book or user not found',
         content: { 'application/json': { schema: ErrorSchema } },
@@ -57,6 +61,10 @@ app.openapi(
 
     if (!(await ratingService.userExists(body.userId))) {
       return c.json({ error: 'User not found' }, 404);
+    }
+
+    if (!(await ratingService.hasPurchased(body.userId, body.isbn))) {
+      return c.json({ error: 'User has not purchased this book' }, 403);
     }
 
     if (await ratingService.ratingExistsForUser(body.userId, body.isbn)) {

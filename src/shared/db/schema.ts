@@ -151,3 +151,22 @@ export const bookComments = pgTable('book_comments', {
   comment: text('comment').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
+
+/**
+ * Purchases table
+ *
+ * Tracks which users have purchased which books.
+ * Used to gate access to rating and commenting features.
+ */
+export const purchases = pgTable('purchases', {
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  isbn: text('isbn')
+    .notNull()
+    .references(() => books.isbn, { onDelete: 'cascade' }),
+  purchasedAt: timestamp('purchased_at').defaultNow().notNull(),
+});
