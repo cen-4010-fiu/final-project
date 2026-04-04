@@ -2,7 +2,7 @@
 # with the "containerized" compose profile 
 
 FROM oven/bun:1.3-slim AS base
-WORKDIR /usr/src/swe-app
+WORKDIR /usr/src/swe-api
 
 # Install dependencies
 FROM base AS install
@@ -18,7 +18,7 @@ COPY . .
 # Runtime
 FROM base AS release
 COPY --from=install /temp/dev/node_modules node_modules
-COPY --from=prerelease /usr/src/swe-app .
+COPY --from=prerelease /usr/src/swe-api .
 
 USER bun
 EXPOSE 3000/tcp
