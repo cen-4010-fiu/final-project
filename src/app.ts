@@ -2,32 +2,19 @@ import { OpenAPIHono } from '@hono/zod-openapi';
 import { Scalar } from '@scalar/hono-api-reference';
 import { logger } from 'hono/logger';
 import { prettyJSON } from 'hono/pretty-json';
+import { requestId } from 'hono/request-id';
+import { timeout } from 'hono/timeout';
 import features from '@/features';
 import { errorHandler } from '@/shared/middleware/error-handler';
+import { notFoundHandler } from '@/shared/middleware/not-found';
 
 export function createApp() {
   const app = new OpenAPIHono();
 
-  app.onError(errorHandler);
-
-  // Error message for empty / page for user to visit /docs instead
-  app.notFound((c) => {
-    console.warn(`[404] ${c.req.method} ${c.req.path} →  Try /docs instead`);
-    return c.json(
-      {
-        sucess: false,
-        error: {
-          code: 404,
-          message: `Route ${c.req.method} ${c.req.path} not found`,
-          hint: 'Try to visit /docs instead',
-        },
-      },
-      404
-    );
-  });
-
   app.use(logger());
   app.use(prettyJSON());
+  app.use(requestId());
+  app.use(timeout(15 * 1000));
 
   app.get('/health', (c) => c.json({ status: 'ok' }));
 
@@ -51,6 +38,9 @@ export function createApp() {
       theme: 'kepler',
     })
   );
+
+  app.onError(errorHandler);
+  app.notFound(notFoundHandler);
 
   return app;
 }
