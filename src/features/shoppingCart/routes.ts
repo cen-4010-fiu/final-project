@@ -19,12 +19,12 @@ app.openapi(
         tags: ['Shopping Cart'],
         summary: 'Add an item to the shopping cart',
         description: 'Adds a new item to the user\'s shopping cart.',
-        requestBody: {
-            description: 'The item to add to the shopping cart',
-            required: true,
-            content: {
-                'application/json': {
-                    schema: CreateShoppingCartItemSchema.openapi({ description: 'Shopping cart item data' }),
+        request: {
+            body: {
+                content: {
+                    'application/json': {
+                        schema: CreateShoppingCartItemSchema,
+                    },
                 },
             },
         },
@@ -33,7 +33,7 @@ app.openapi(
                 description: 'The updated list of items in the shopping cart',
                 content: {
                     'application/json': {
-                        schema: ShoppingCartItemListSchema.openapi({ description: 'List of shopping cart items' }),
+                        schema: ShoppingCartItemListSchema,
                     },
                 },
             },
@@ -47,9 +47,10 @@ app.openapi(
                                 error: {
                                     type: 'string',
                                 },
-                            },                        },
+                            },
                         },
                     },
+                },
             },
             500: {
                 description: 'Internal server error',
