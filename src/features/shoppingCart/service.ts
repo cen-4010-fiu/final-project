@@ -14,7 +14,7 @@ import { and, eq } from 'drizzle-orm';
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
 export class ShoppingCartService {
-    getCartSubtotal(arg0: string) {
+    getCartSubtotal(_arg0: string) {
         throw new Error('Method not implemented.');
     }
     async addItemToCart(item: CreateShoppingCartItemType): Promise<ShoppingCartItemType[]> {
