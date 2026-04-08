@@ -5,7 +5,7 @@
  * Handles database operations for the shopping cart, including creating, updating, and deleting cart items, as well as retrieving the current state of the shopping cart for a user.
  */
 
-import { db } from '@/shared/db';
+import { db } from '@/shared/db/client';
 import { shoppingCartItems } from '@/shared/db/schema';
 import type { CreateShoppingCartItemSchema, CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
 import { z } from 'zod';
@@ -25,7 +25,7 @@ export class ShoppingCartService {
             id: item.id,
             shoppingCartId: item.shoppingCartId,
             isbn: item.bookIsbn,
-            quantity: item || 1,
+            quantity: item.id || 1,
         })) as unknown as ShoppingCartItemType[];
     }
 
@@ -46,8 +46,8 @@ export class ShoppingCartService {
     }
 
     private getBookPrice(isbn: string): number {
-        // This is a placeholder implementation. In a real application, you would retrieve the price from your database or an external service.
-        return 10; // Assume each book costs $10 for demonstration purposes
+        // Placeholder implementation - in a real application, you would query the database or an external service to get the price of the book by its ISBN
+        return 10; // Assume every book costs $10 for this example
     }
 }
 
