@@ -14,6 +14,9 @@ import { and, eq } from 'drizzle-orm';
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
 export class ShoppingCartService {
+    getCartSubtotal(arg0: string) {
+        throw new Error('Method not implemented.');
+    }
     async addItemToCart(item: CreateShoppingCartItemType): Promise<ShoppingCartItemType[]> {
         const [newItem] = await db.insert(shoppingCartItems).values(item).returning();
         return this.getCartItems(newItem!.shoppingCartId);

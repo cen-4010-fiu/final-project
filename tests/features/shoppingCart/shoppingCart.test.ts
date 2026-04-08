@@ -65,8 +65,8 @@ describe('Shopping Cart API', () => {
             quantity: 2,
         };
         const response = await addItem(newItem);
-        expect(response.statusCode).toBe(200);
-        const responseData = JSON.parse(response.body);
+        expect(response.status).toBe(200);
+        const responseData = JSON.parse(await response.text());
         expect(Array.isArray(responseData)).toBe(true);
         expect(responseData).toEqual(
             expect.arrayContaining([
@@ -88,8 +88,8 @@ describe('Shopping Cart API', () => {
             quantity: 0, // Invalid quantity
         };
         const response = await addItem(invalidItem);
-        expect(response.statusCode).toBe(400);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
+        expect(response.status).toBe(400);
+        const responseData = JSON.parse(await response.text()) as ErrorResponse;
         expect(responseData.error).toBe('Invalid request data');
         });
 
@@ -107,8 +107,8 @@ describe('Shopping Cart API', () => {
             quantity: 2, 
         };
         const response = await addItem(newItem);
-        expect(response.statusCode).toBe(500);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
+        expect(response.status).toBe(500);
+        const responseData = JSON.parse(await response.text()) as ErrorResponse;
         expect(responseData.error).toBe('Internal server error');
         // Restore the original database insert function
         db.insert = originalInsert;
@@ -187,8 +187,8 @@ describe('Shopping Cart API - Get Items', () => {
         });
         // Now, retrieve the items in the cart
         const response = await getCartItems(cartId);
-        expect(response.statusCode).toBe(200);
-        const responseData = JSON.parse(response.body);
+        expect(response.status).toBe(200);
+        const responseData = JSON.parse(await response.text());
         expect(Array.isArray(responseData)).toBe(true);
         expect(responseData).toEqual(
             expect.arrayContaining([
@@ -217,8 +217,8 @@ describe('Shopping Cart API - Remove Item', () => {
         });
         // Now, remove the item from the cart
         const response = await removeItem(cartId, itemId);
-        expect(response.statusCode).toBe(200);
-        const responseData = JSON.parse(response.body);
+        expect(response.status).toBe(200);
+        const responseData = JSON.parse(await response.text());
         expect(Array.isArray(responseData)).toBe(true);
         expect(responseData).not.toEqual(
             expect.arrayContaining([
@@ -251,8 +251,8 @@ describe('Shopping Cart API - Calculate Subtotal', () => {
         });
         // Now, calculate the subtotal
         const response = await calculateSubtotal(cartId);
-        expect(response.statusCode).toBe(200);
-        const responseData = JSON.parse(response.body);
+        expect(response.status).toBe(200);
+        const responseData = JSON.parse(await response.text());
         expect(typeof responseData).toBe('number');
         expect(responseData).toBe(35.00); // 2 * $10 + 1 * $15 = $35
     });
@@ -269,8 +269,8 @@ describe('Shopping Cart API - Error Handling', () => {
             quantity: 0, // Invalid quantity
         };
         const response = await addItem(invalidItem);
-        expect(response.statusCode).toBe(400);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
+        expect(response.status).toBe(400);
+        const responseData = JSON.parse(await response.text()) as ErrorResponse;
         expect(responseData.error).toBe('Invalid request data');
     });
 
@@ -288,8 +288,8 @@ describe('Shopping Cart API - Error Handling', () => {
             quantity: 2,
         };
         const response = await addItem(newItem);
-        expect(response.statusCode).toBe(500);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
+        expect(response.status).toBe(500);
+        const responseData = JSON.parse(await response.text()) as ErrorResponse;
         expect(responseData.error).toBe('Internal server error');
         // Restore the original database insert function
         db.insert = originalInsert;

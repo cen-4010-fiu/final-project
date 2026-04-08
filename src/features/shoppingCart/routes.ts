@@ -8,8 +8,12 @@
  */
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { CreateShoppingCartItemSchema } from '@/shared/schemas/shoppingCart';
-import { ShoppingCartItemListSchema } from '@/shared/schemas/shoppingCart';
 import { ShoppingCartService } from './service';
+import { z } from 'zod';
+
+const ErrorSchema = z.object({
+    error: z.string(),
+});
 
 const app = new OpenAPIHono();
 const shoppingCartService = new ShoppingCartService();
@@ -35,7 +39,7 @@ app.openapi(
                 description: 'The updated list of items in the shopping cart',
                 content: {
                     'application/json': {
-                        schema: ShoppingCartItemListSchema,
+                        schema: z.array(CreateShoppingCartItemSchema),
                     },
                 },
             },
@@ -43,14 +47,7 @@ app.openapi(
                 description: 'Invalid request data',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -58,14 +55,7 @@ app.openapi(
                 description: 'Internal server error',
                 content: {
                     'application/json': {
-                        schema: {   
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -77,13 +67,14 @@ app.openapi(
             if (!cartId || !isbn || quantity < 1) {
                 return c.json({ error: 'Invalid request data' }, 400);
             }
-            // Here you would typically add the item to the shopping cart in your database
             const updatedCartItems = await shoppingCartService.addItemToCart({
-                cartId, isbn, quantity,
-                shoppingCartId: undefined,
-                bookIsbn: undefined
+                cartId,
+                isbn,
+                quantity,
+                shoppingCartId: '',
+                bookIsbn: ''
             });
-            return c.json(updatedCartItems);
+            return c.json(updatedCartItems, 200);
         } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
@@ -102,7 +93,15 @@ app.openapi(
                 description: 'The list of items in the shopping cart',
                 content: {
                     'application/json': {
-                        schema: ShoppingCartItemListSchema,
+                        schema: z.array(CreateShoppingCartItemSchema),
+                    },
+                },
+            },
+            400: {
+                description: 'Invalid cart ID',
+                content: {
+                    'application/json': {
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -110,14 +109,7 @@ app.openapi(
                 description: 'Internal server error',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -125,9 +117,12 @@ app.openapi(
     }),    
     async (c) => {
         try {
-            // Here you would typically retrieve the items from the shopping cart in your database
-            // For demonstration purposes, we'll just return an empty list 
-            return c.json([]);
+            const { cartId } = c.req.query();
+            if (!cartId) {
+                return c.json({ error: 'Invalid cart ID' }, 400);
+            }
+            const cartItems = await shoppingCartService.getCartItems(cartId);
+            return c.json(cartItems, 200);
         } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
@@ -157,7 +152,7 @@ app.openapi(
                 description: 'The updated list of items in the shopping cart',
                 content: {
                     'application/json': {
-                        schema: ShoppingCartItemListSchema,
+                        schema: z.array(CreateShoppingCartItemSchema),
                     },
                 },
             },
@@ -165,14 +160,9 @@ app.openapi(
                 description: 'Invalid item ID',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: z.object({
+                            error: z.string(),
+                        }),
                     },
                 },
             },
@@ -180,14 +170,9 @@ app.openapi(
                 description: 'Internal server error',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: z.object({
+                            error: z.string(),
+                        }),
                     },
                 },
             },
@@ -196,12 +181,14 @@ app.openapi(
     async (c) => {
         try {            
             const { itemId } = c.req.param();
-            if (!itemId) {
-                return c.json({ error: 'Invalid item ID' }, 400);
+            const { cartId } = c.req.query();
+            if (!itemId || !cartId) {
+                return c.json({ error: 'Invalid item ID or cart ID' }, 400);
             }
             // Here you would typically remove the item from the shopping cart in your database
-            // For demonstration purposes, we'll just return a success response
-            return c.json({ message: 'Item removed from shopping cart successfully' });
+            // For demonstration purposes, we'll just return the updated cart
+            const updatedCartItems = await shoppingCartService.removeItemFromCart(cartId, itemId);
+            return c.json(updatedCartItems, 200);
         } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
@@ -211,7 +198,7 @@ app.openapi(
 app.openapi(
     createRoute({
         method: 'get',
-        path: '/cart/items',
+        path: '/cart/subtotal',
         tags: ['Shopping Cart'],
         summary: 'Get subtotal of items in the shopping cart',
         description: 'Calculates and retrieves the subtotal price of all items currently in the user\'s shopping cart.',
@@ -220,16 +207,17 @@ app.openapi(
                 description: 'The subtotal price of items in the shopping cart',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                subtotal: {
-                                    type: 'number',
-                                    format: 'float',
-                                    description: 'The subtotal price of all items in the shopping cart',
-                                },
-                            },
-                        },
+                        schema: z.object({
+                            subtotal: z.number(),
+                        }),
+                    },
+                },
+            },
+            400: {
+                description: 'Invalid cart ID',
+                content: {
+                    'application/json': {
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -237,14 +225,7 @@ app.openapi(
                 description: 'Internal server error',
                 content: {
                     'application/json': {
-                        schema: {
-                            type: 'object',
-                            properties: {
-                                error: {
-                                    type: 'string',
-                                },
-                            },
-                        },
+                        schema: ErrorSchema,
                     },
                 },
             },
@@ -252,9 +233,12 @@ app.openapi(
     }),
     async (c) => {
         try {
-            // Here you would typically calculate the subtotal from the shopping cart items in your database
-            // For demonstration purposes, we'll just return a fixed subtotal value
-            return c.json({ subtotal: 0.00 });
+            const { cartId } = c.req.query();
+            if (!cartId) {
+                return c.json({ error: 'Invalid cart ID' }, 400);
+            }
+            const subtotal = await shoppingCartService.calculateCartSubtotal(cartId);
+            return c.json({ subtotal }, 200);
         } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
