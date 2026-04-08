@@ -40,18 +40,24 @@ async function addItem(data: {
 async function getCartItems(cartId: string) {
     return await app.request(new Request(`/api/shopping-cart/items?cartId=${cartId}`, {
         method: 'GET',
+        body: JSON.stringify({ cartId }),
+        headers: { 'Content-Type': 'application/json' },
     }));
 }
 
 async function removeItem(cartId: string, itemId: string) {
     return await app.request(new Request(`/api/shopping-cart/items?cartId=${cartId}&itemId=${itemId}`, {
         method: 'DELETE',
+        body: JSON.stringify({ cartId, itemId }),
+        headers: { 'Content-Type': 'application/json' },
     }));
 }
 
 async function calculateSubtotal(cartId: string) {
     return await app.request(new Request(`/api/shopping-cart/subtotal?cartId=${cartId}`, {
         method: 'GET',
+        body: JSON.stringify({ cartId }),
+        headers: { 'Content-Type': 'application/json' },
     }));
 }
 

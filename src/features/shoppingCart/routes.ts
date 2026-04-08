@@ -75,7 +75,7 @@ app.openapi(
                 bookIsbn: ''
             });
             return c.json(updatedCartItems, 200);
-        } catch (error) {
+        } catch (_error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
     }    

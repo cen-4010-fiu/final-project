@@ -13,6 +13,9 @@ import { and, eq } from 'drizzle-orm';
 
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
+// ...existing code...
+
+// ...existing code...
 export class ShoppingCartService {
     getCartSubtotal(_arg0: string) {
         throw new Error('Method not implemented.');
@@ -28,7 +31,7 @@ export class ShoppingCartService {
             id: item.id,
             shoppingCartId: item.shoppingCartId,
             isbn: item.bookIsbn,
-            quantity: (item as any).quantity || 1,
+            quantity: item.quantity,
         })) as unknown as ShoppingCartItemType[];
     }
 
@@ -48,8 +51,7 @@ export class ShoppingCartService {
         }, 0);
     }
 
-    private getBookPrice(isbn: string): number {
-        // Placeholder implementation - in a real application, you would query the database or an external service to get the price
+    private getBookPrice(_isbn: string): number {
         return 10; // Assume each book costs $10 for demonstration purposes
     }
 }

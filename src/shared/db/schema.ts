@@ -181,8 +181,12 @@ export const shoppingCartItems = pgTable('shopping_cart_items', {
   bookIsbn: text('book_isbn')
     .notNull()
     .references(() => books.isbn),
+  quantity: integer('quantity').notNull().default(1),
 });
 
+// ...existing code...
+
+// ...existing code...
 /**
  * Wish List table
  *
