@@ -9,8 +9,10 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { CreateShoppingCartItemSchema } from '@/shared/schemas/shoppingCart';
 import { ShoppingCartItemListSchema } from '@/shared/schemas/shoppingCart';
+import { ShoppingCartService } from './service';
 
 const app = new OpenAPIHono();
+const shoppingCartService = new ShoppingCartService();
 
 app.openapi(
     createRoute({
@@ -76,8 +78,12 @@ app.openapi(
                 return c.json({ error: 'Invalid request data' }, 400);
             }
             // Here you would typically add the item to the shopping cart in your database
-            // For demonstration purposes, we'll just return a success response
-            return c.json({ message: 'Item added to shopping cart successfully' });
+            const updatedCartItems = await shoppingCartService.addItemToCart({
+                cartId, isbn, quantity,
+                shoppingCartId: undefined,
+                bookIsbn: undefined
+            });
+            return c.json(updatedCartItems);
         } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
