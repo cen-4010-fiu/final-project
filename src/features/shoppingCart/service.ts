@@ -25,7 +25,7 @@ export class ShoppingCartService {
             id: item.id,
             shoppingCartId: item.shoppingCartId,
             isbn: item.bookIsbn,
-            quantity: item.id || 1,
+            quantity: (item as any).quantity || 1,
         })) as unknown as ShoppingCartItemType[];
     }
 
