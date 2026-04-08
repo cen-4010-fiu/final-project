@@ -15,7 +15,8 @@ import { createApp } from '@/app';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
 import { db } from '@/shared/db';
 
-const Request = globalThis.Request;
+declare const Request: any;
+
 const app = createApp();
 
 interface ShoppingCart {
