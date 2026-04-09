@@ -30,7 +30,10 @@ export class ShoppingCartService {
       .insert(shoppingCartItems)
       .values(item)
       .returning();
-    return this.getCartItems(newItem!.shoppingCartId);
+      if (!newItem) {
+        throw new Error('Failed to add item to cart');
+      }
+    return this.getCartItems(item.cartId);
   }
 
   async getCartItems(cartId: string): Promise<ShoppingCartItemType[]> {

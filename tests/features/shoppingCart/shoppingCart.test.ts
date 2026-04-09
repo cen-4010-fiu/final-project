@@ -9,10 +9,13 @@
  * The test suite should be organized in a way that allows for easy maintenance and scalability as the shopping cart feature evolves, and it should be integrated into the continuous integration pipeline to ensure that any issues are detected early in the development process.
  *
  */
-import { createApp } from '@/app';
-import { db } from '@/shared/db';
+
 import { describe, expect, it } from 'bun:test';
+import { createApp } from '@/app';
+import type { CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
+import { db } from '@/shared/db';
+
 
 declare const Request: any;
 
@@ -137,7 +140,7 @@ describe('Shopping Cart Service', () => {
       quantity: 2,
     };
     const cartItems = await service.addItemToCart(
-      Object.assign({}, newItem) as any
+      Object.assign({}, newItem) as CreateShoppingCartItemType
     );
     expect(Array.isArray(cartItems)).toBe(true);
     expect(cartItems).toEqual(
