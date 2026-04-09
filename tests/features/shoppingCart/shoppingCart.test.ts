@@ -12,12 +12,9 @@
 
 import { describe, expect, it } from 'bun:test';
 import { createApp } from '@/app';
-import type { CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
 import { db } from '@/shared/db';
-
-
-declare const Request: any;
+import type { CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
 
 const app = createApp();
 
@@ -32,43 +29,38 @@ async function addItem(data: {
   price: string;
   quantity: number;
 }) {
-  return await app.request(
-    new Request('/api/shopping-cart/items', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
+  return await app.request('/api/shopping-cart/items', {
+    method: 'POST',
+    body: JSON.stringify(data),
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 async function getCartItems(cartId: string) {
-  return await app.request(
-    new Request(`/api/shopping-cart/items?cartId=${cartId}`, {
-      method: 'GET',
-      body: JSON.stringify({ cartId }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
+  return await app.request(`/api/shopping-cart/items?cartId=${cartId}`, {
+    method: 'GET',
+    body: JSON.stringify({ cartId }),
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 async function removeItem(cartId: string, itemId: string) {
   return await app.request(
-    new Request(`/api/shopping-cart/items?cartId=${cartId}&itemId=${itemId}`, {
+    `/api/shopping-cart/items?cartId=${cartId}&itemId=${itemId}`,
+    {
       method: 'DELETE',
       body: JSON.stringify({ cartId, itemId }),
       headers: { 'Content-Type': 'application/json' },
-    })
+    }
   );
 }
 
 async function calculateSubtotal(cartId: string) {
-  return await app.request(
-    new Request(`/api/shopping-cart/subtotal?cartId=${cartId}`, {
-      method: 'GET',
-      body: JSON.stringify({ cartId }),
-      headers: { 'Content-Type': 'application/json' },
-    })
-  );
+  return await app.request(`/api/shopping-cart/subtotal?cartId=${cartId}`, {
+    method: 'GET',
+    body: JSON.stringify({ cartId }),
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 describe('Shopping Cart API', () => {
