@@ -6,16 +6,12 @@
  */
 
 import { and, eq } from 'drizzle-orm';
-import type { z } from 'zod';
 import { db } from '@/shared/db/client';
 import { shoppingCartItems } from '@/shared/db/schema';
 import type {
   CreateShoppingCartItemSchema,
   CreateShoppingCartItemType,
 } from '@/shared/schemas/shoppingCart';
-import { db } from '@/shared/db/client';
-import { shoppingCartItems } from '@/shared/db/schema';
-
 import type { z } from 'zod';
 
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
