@@ -12,11 +12,11 @@
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
 import { z } from 'zod';
 import {
-  WishlistSchema,
-  WishlistItemSchema,
-  CreateWishlistSchema,
   AddWishlistItemSchema,
+  CreateWishlistSchema,
   ErrorSchema,
+  WishlistItemSchema,
+  WishlistSchema,
 } from '@/shared/schemas';
 import { wishlistService } from './service';
 
@@ -31,7 +31,9 @@ app.openapi(
     summary: 'Create a wishlist',
     description: 'Creates a new wishlist with a unique name for a user.',
     request: {
-      body: { content: { 'application/json': { schema: CreateWishlistSchema } } },
+      body: {
+        content: { 'application/json': { schema: CreateWishlistSchema } },
+      },
     },
     responses: {
       201: {
@@ -70,7 +72,9 @@ app.openapi(
     summary: 'Add a book to a wishlist',
     description: 'Adds a book by ISBN to the specified wishlist.',
     request: {
-      body: { content: { 'application/json': { schema: AddWishlistItemSchema } } },
+      body: {
+        content: { 'application/json': { schema: AddWishlistItemSchema } },
+      },
     },
     responses: {
       201: {
@@ -132,7 +136,10 @@ app.openapi(
     if (!wishlist) {
       return c.json({ error: 'Wishlist not found' }, 404);
     }
-    const deleted = await wishlistService.removeBookFromWishlist(wishlistId, isbn);
+    const deleted = await wishlistService.removeBookFromWishlist(
+      wishlistId,
+      isbn
+    );
     if (!deleted) {
       return c.json({ error: 'Failed to remove book from wishlist' }, 500);
     }
