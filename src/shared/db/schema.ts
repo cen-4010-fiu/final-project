@@ -210,7 +210,7 @@ export const wishListItems = pgTable('wish_list_items', {
     .$defaultFn(() => crypto.randomUUID()),
   wishListId: text('wish_list_id')
     .notNull()
-    .references(() => shoppingCart.id),
+    .references(() => wishList.id),
   bookIsbn: text('book_isbn')
     .notNull()
     .references(() => books.isbn),
