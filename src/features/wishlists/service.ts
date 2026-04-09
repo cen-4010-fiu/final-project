@@ -7,8 +7,11 @@
 
 import { eq } from 'drizzle-orm';
 import type { z } from 'zod';
-import { db, wishList, wishListItems, books } from '@/shared/db';
-import type { CreateWishlistSchema, AddWishlistItemSchema } from '@/shared/schemas';
+import { books, db, wishList, wishListItems } from '@/shared/db';
+import type {
+  AddWishlistItemSchema,
+  CreateWishlistSchema,
+} from '@/shared/schemas';
 
 type CreateWishlistInput = z.infer<typeof CreateWishlistSchema>;
 type AddWishlistItemInput = z.infer<typeof AddWishlistItemSchema>;
