@@ -7,9 +7,9 @@
  * The routes are structured to ensure that the shopping cart feature remains robust and reliable as changes are made to the codebase, and they should be tested thoroughly to catch any issues early in the development process.
  */
 import { createRoute, OpenAPIHono } from '@hono/zod-openapi';
+import { z } from 'zod';
 import { CreateShoppingCartItemSchema } from '@/shared/schemas/shoppingCart';
 import { ShoppingCartService } from './service';
-import { z } from 'zod';
 
 const ErrorSchema = z.object({
   error: z.string(),
