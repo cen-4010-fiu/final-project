@@ -13,7 +13,6 @@ export const CreateShoppingCartItemSchema = baseInsertSchema
   .extend({
     cartId: z.string(),
     isbn: z.string(),
-    quantity: z.number().min(1),
   })
   .openapi('CreateShoppingCartItem');
 type CreateShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
