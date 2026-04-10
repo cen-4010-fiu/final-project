@@ -1,6 +1,6 @@
 /**
  * Shopping Cart Routes
- *
+ * 
  * REST API endpoints for managing the shopping cart, including adding items to the cart, removing items from the cart, retrieving the list of items in the cart, and calculating the subtotal of the items in the cart.
  * The routes are implemented using the Hono framework and are designed to handle various scenarios, including successful operations, invalid input handling, and error handling for server issues.
  * The routes are defined with OpenAPI specifications to provide clear documentation and facilitate integration with frontend applications or other services that need to interact with the shopping cart functionality.
@@ -12,7 +12,7 @@ import { ShoppingCartService } from './service';
 import { z } from 'zod';
 
 const ErrorSchema = z.object({
-  error: z.string(),
+    error: z.string(),
 });
 
 const app = new OpenAPIHono();
@@ -123,7 +123,7 @@ app.openapi(
             }
             const cartItems = await shoppingCartService.getCartItems(cartId);
             return c.json(cartItems, 200);
-        } catch (_error) {
+        } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
     }
@@ -189,7 +189,7 @@ app.openapi(
             // For demonstration purposes, we'll just return the updated cart
             const updatedCartItems = await shoppingCartService.removeItemFromCart(cartId, itemId);
             return c.json(updatedCartItems, 200);
-        } catch (_error) {
+        } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
     }    
@@ -239,7 +239,7 @@ app.openapi(
             }
             const subtotal = await shoppingCartService.calculateCartSubtotal(cartId);
             return c.json({ subtotal }, 200);
-        } catch (_error) {
+        } catch (error) {
             return c.json({ error: 'Internal server error' }, 500);
         }
     }    
