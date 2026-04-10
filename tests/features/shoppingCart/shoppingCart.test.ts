@@ -19,6 +19,14 @@ declare const Request: any;
 
 const app = createApp();
 
+interface ShoppingCart {
+    id : string;
+    cartId : string;
+    isbn : string;
+    price : string;
+    quantity : number;
+}
+
 interface ErrorResponse {
     error : string;
 }
