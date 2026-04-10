@@ -54,6 +54,7 @@ export const bookBrowsingService = {
 
     const result = await db
       .select({
+        id: books.id,
         isbn: books.isbn,
         name: books.name,
         description: books.description,
@@ -70,6 +71,7 @@ export const bookBrowsingService = {
       .from(books)
       .leftJoin(bookRatings, eq(bookRatings.isbn, books.isbn))
       .groupBy(
+        books.id,
         books.isbn,
         books.name,
         books.description,
