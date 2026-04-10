@@ -14,6 +14,7 @@ import { describe, expect, it } from 'bun:test';
 import { db } from '@/shared/db';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
 
+
 declare const Request: any;
 
 const app = createApp();
