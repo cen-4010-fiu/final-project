@@ -25,7 +25,7 @@ async function addItem(data: {
   id: string;
   cartId: string;
   isbn: string;
-  price: string;
+  price?: number;
 }) {
   return await app.request('/api/shopping-cart/items', {
     method: 'POST',
@@ -44,7 +44,7 @@ async function getCartItems(cartId: string) {
 
 async function removeItem(cartId: string, itemId: string) {
   return await app.request(
-    `/api/shopping-cart/docs?cartId=${cartId}&itemId=${itemId}`,
+    `/api/shopping-cart/items?cartId=${cartId}&itemId=${itemId}`,
     {
       method: 'DELETE',
       body: JSON.stringify({ cartId, itemId }),
@@ -55,7 +55,7 @@ async function removeItem(cartId: string, itemId: string) {
 
 async function calculateSubtotal(cartId: string) {
   return await app.request(
-    `/api/shopping-cart/docs/subtotal?cartId=${cartId}`,
+    `/api/shopping-cart/items/subtotal?cartId=${cartId}`,
     {
       method: 'GET',
       body: JSON.stringify({ cartId }),
@@ -70,8 +70,7 @@ describe('Shopping Cart API', () => {
       id: '1',
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
-      quantity: 2,
+      price: 10.00,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(200);
@@ -82,7 +81,6 @@ describe('Shopping Cart API', () => {
         expect.objectContaining({
           cartId: 'cart123',
           isbn: '978-3-16-148410-0',
-          quantity: 2,
         }),
       ])
     );
@@ -93,8 +91,7 @@ describe('Shopping Cart API', () => {
       id: '2',
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
-      quantity: 0, // Invalid quantity
+      price: 10.00,
     };
     const response = await addItem(invalidItem);
     expect(response.status).toBe(400);
@@ -112,8 +109,7 @@ describe('Shopping Cart API', () => {
       id: '3',
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
-      quantity: 2,
+      price: 10.00,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(500);
@@ -130,7 +126,6 @@ describe('Shopping Cart Service', () => {
     const newItem = {
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      quantity: 2,
     };
     const cartItems = await service.addItemToCart(
       Object.assign({}, newItem) as unknown as CreateShoppingCartItemType
@@ -192,9 +187,9 @@ describe('Shopping Cart API - Get Items', () => {
     // First, add an item to the cart
     await addItem({
       id: '1',
-      cartId,
+      cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
+      price: 10.00,
     });
     // Now, retrieve the items in the cart
     const response = await getCartItems(cartId);
@@ -204,7 +199,7 @@ describe('Shopping Cart API - Get Items', () => {
     expect(responseData).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          cartId,
+          cartId: 'cart123',
           isbn: '978-3-16-148410-0',
         }),
       ])
@@ -220,9 +215,9 @@ describe('Shopping Cart API - Remove Item', () => {
     // First, add an item to the cart
     await addItem({
       id: itemId,
-      cartId,
+      cartId: cartId,
       isbn: '978-3-16-148410-0',
-      price: '10.00',
+      price: 10.00,
     });
     // Now, remove the item from the cart
     const response = await removeItem(cartId, itemId);
@@ -246,15 +241,15 @@ describe('Shopping Cart API - Calculate Subtotal', () => {
     // First, add items to the cart
     await addItem({
       id: '1',
-      cartId,
+      cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
+      price: 10.00,
     });
     await addItem({
       id: '2',
-      cartId,
+      cartId: 'cart123',
       isbn: '978-1-23-456789-0',
-      price: '15.00',
+      price: 15.00,
     });
     // Now, calculate the subtotal
     const response = await calculateSubtotal(cartId);
@@ -274,7 +269,7 @@ describe('Shopping Cart API - Error Handling', () => {
       id: '3',
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
+      price: 10.00,
     };
     const response = await addItem(invalidItem);
     expect(response.status).toBe(400);
@@ -292,7 +287,7 @@ describe('Shopping Cart API - Error Handling', () => {
       id: '4',
       cartId: 'cart123',
       isbn: '978-3-16-148410-0',
-      price: '10.00',
+      price: 10.00,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(500);

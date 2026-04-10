@@ -232,7 +232,7 @@ app.openapi(
             schema: ErrorSchema,
           },
         },
-      },
+      },  
     },
   }),
   async (c) => {
