@@ -42,6 +42,7 @@ export class ShoppingCartService {
       id: item.id,
       shoppingCartId: item.shoppingCartId,
       isbn: item.bookIsbn,
+      quantity: item.quantity,
     })) as unknown as ShoppingCartItemType[];
   }
 
@@ -65,7 +66,7 @@ export class ShoppingCartService {
     return items.reduce((subtotal, item) => {
       // Assuming we have a way to get the price of the book by its ISBN
       const price = this.getBookPrice(item.isbn);
-      return subtotal + price;
+      return subtotal + price * item.quantity;
     }, 0);
   }
 
