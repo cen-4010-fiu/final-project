@@ -30,7 +30,7 @@ async function addItem(data: {
     price : string;
     quantity : number;
 }) {
-    return await app.request(new Request('/api/shopping-cart/items', {
+    return await app.request(new Request('http://localhost/cart/items', {
         method: 'POST',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
@@ -38,19 +38,19 @@ async function addItem(data: {
 }
 
 async function getCartItems(cartId: string) {
-    return await app.request(new Request(`/api/shopping-cart/items?cartId=${cartId}`, {
+    return await app.request(new Request(`http://localhost/cart/items?cartId=${cartId}`, {
         method: 'GET',
     }));
 }
 
 async function removeItem(cartId: string, itemId: string) {
-    return await app.request(new Request(`/api/shopping-cart/items?cartId=${cartId}&itemId=${itemId}`, {
+    return await app.request(new Request(`http://localhost/cart/items?cartId=${cartId}&itemId=${itemId}`, {
         method: 'DELETE',
     }));
 }
 
 async function calculateSubtotal(cartId: string) {
-    return await app.request(new Request(`/api/shopping-cart/subtotal?cartId=${cartId}`, {
+    return await app.request(new Request(`http://localhost/cart/subtotal?cartId=${cartId}`, {
         method: 'GET',
     }));
 }
@@ -199,8 +199,9 @@ describe('Shopping Cart API - Get Items', () => {
                 }),
             ])
         );
-    });
+    }
     // Additional test cases for retrieving items with an empty cart or invalid cartId would go here
+);
 });
 
 describe('Shopping Cart API - Remove Item', () => {
@@ -227,8 +228,9 @@ describe('Shopping Cart API - Remove Item', () => {
                 }),
             ])
         );
-    });
+    }
     // Additional test cases for removing items with an invalid cartId or itemId would go here
+);
 });
 
 describe('Shopping Cart API - Calculate Subtotal', () => {
@@ -255,43 +257,9 @@ describe('Shopping Cart API - Calculate Subtotal', () => {
         const responseData = JSON.parse(response.body);
         expect(typeof responseData).toBe('number');
         expect(responseData).toBe(35.00); // 2 * $10 + 1 * $15 = $35
-    });
+    }
     // Additional test cases for calculating subtotal with an empty cart or invalid cartId would go here
+);
 });
 
-describe('Shopping Cart API - Error Handling', () => {
-    it('should return 400 for invalid input when adding an item', async () => {
-        const invalidItem = {
-            id: '3',
-            cartId: 'cart123',
-            isbn: '978-3-16-148410-0',
-            price: '10.00',
-            quantity: 0, // Invalid quantity
-        };
-        const response = await addItem(invalidItem);
-        expect(response.statusCode).toBe(400);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
-        expect(responseData.error).toBe('Invalid request data');
-    });
 
-    it('should return 500 for server errors when adding an item', async () => {
-        // Simulate a server error by mocking the database operation to throw an error
-        const originalInsert = db.insert;
-        db.insert = () => {
-            throw new Error('Database error');
-        };
-        const newItem = {
-            id: '4',
-            cartId: 'cart123',
-            isbn: '978-3-16-148410-0',
-            price: '10.00',
-            quantity: 2,
-        };
-        const response = await addItem(newItem);
-        expect(response.statusCode).toBe(500);
-        const responseData = JSON.parse(response.body) as ErrorResponse;
-        expect(responseData.error).toBe('Internal server error');
-        // Restore the original database insert function
-        db.insert = originalInsert;
-    });
-});

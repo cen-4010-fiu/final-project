@@ -46,8 +46,8 @@ export class ShoppingCartService {
     }
 
     private getBookPrice(isbn: string): number {
-        // Placeholder implementation - in a real application, you would query the database or an external service to get the price
-        return 10; // Assume each book costs $10 for demonstration purposes
+        // Placeholder implementation - in a real application, you would query the database or an external service to get the price of the book by its ISBN
+        return 10; // Assume every book costs $10 for this example
     }
 }
 
