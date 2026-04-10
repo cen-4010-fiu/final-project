@@ -16,6 +16,9 @@ import type { z } from 'zod';
 
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
+// ...existing code...
+
+// ...existing code...
 export class ShoppingCartService {
   getCartSubtotal(_arg0: string) {
     throw new Error('Method not implemented.');
@@ -27,9 +30,9 @@ export class ShoppingCartService {
       .insert(shoppingCartItems)
       .values(item)
       .returning();
-    if (!newItem) {
-      throw new Error('Failed to add item to cart');
-    }
+      if (!newItem) {
+        throw new Error('Failed to add item to cart');
+      }
     return this.getCartItems(item.cartId);
   }
 
