@@ -10,7 +10,7 @@
  *
  */
 
-import { describe, expect, it } from 'bun:test';
+import { describe, it, expect } from 'bun:test';
 import { createApp } from '@/app';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
 import { db } from '@/shared/db';

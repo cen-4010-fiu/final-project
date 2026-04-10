@@ -1,5 +1,5 @@
-import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { z } from 'zod';
+import { createInsertSchema, createSelectSchema } from 'drizzle-zod';
 import { shoppingCartItems } from '@/shared/db/schema';
 
 const baseInsertSchema = createInsertSchema(shoppingCartItems);

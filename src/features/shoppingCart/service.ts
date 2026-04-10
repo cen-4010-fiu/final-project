@@ -5,14 +5,14 @@
  * Handles database operations for the shopping cart, including creating, updating, and deleting cart items, as well as retrieving the current state of the shopping cart for a user.
  */
 
-import { and, eq } from 'drizzle-orm';
-import type { z } from 'zod';
 import { db } from '@/shared/db/client';
 import { shoppingCartItems } from '@/shared/db/schema';
 import type {
   CreateShoppingCartItemSchema,
   CreateShoppingCartItemType,
 } from '@/shared/schemas/shoppingCart';
+import { z } from 'zod';
+import { and, eq } from 'drizzle-orm';
 
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
