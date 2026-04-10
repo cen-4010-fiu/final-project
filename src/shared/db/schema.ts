@@ -184,6 +184,9 @@ export const shoppingCartItems = pgTable('shopping_cart_items', {
   quantity: integer('quantity').notNull().default(1),
 });
 
+// ...existing code...
+
+// ...existing code...
 /**
  * Wish List table
  *
