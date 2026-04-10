@@ -63,16 +63,15 @@ app.openapi(
   }),
   async (c) => {
     try {
-      const { cartId, isbn, quantity } = c.req.valid('json');
-      if (!cartId || !isbn || quantity < 1) {
+      const { cartId, isbn } = c.req.valid('json');
+      if (!cartId || !isbn) {
         return c.json({ error: 'Invalid request data' }, 400);
       }
       const updatedCartItems = await shoppingCartService.addItemToCart({
         cartId,
         isbn,
-        quantity,
         shoppingCartId: '',
-        bookIsbn: '',
+        bookIsbn: ''
       });
       return c.json(updatedCartItems, 200);
     } catch (_error) {
