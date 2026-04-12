@@ -89,7 +89,10 @@ export const authors = pgTable('authors', {
  * Stores book information. authorId is a foreign key to authors.
  */
 export const books = pgTable('books', {
-  isbn: text('isbn').primaryKey(),
+  id: text('id')
+    .primaryKey()
+    .$defaultFn(() => crypto.randomUUID()),
+  isbn: text('isbn').notNull().unique(),
   name: text('name').notNull(),
   description: text('description'),
   price: numeric('price', { precision: 10, scale: 2 }).notNull(),
@@ -178,9 +181,9 @@ export const shoppingCartItems = pgTable('shopping_cart_items', {
   shoppingCartId: text('shopping_cart_id')
     .notNull()
     .references(() => shoppingCart.id),
-  bookIsbn: text('book_isbn')
+  bookId: text('book_id')
     .notNull()
-    .references(() => books.isbn),
+    .references(() => books.id),
 });
 
 /**

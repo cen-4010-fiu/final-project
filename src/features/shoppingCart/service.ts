@@ -8,7 +8,7 @@
 import { and, eq } from 'drizzle-orm';
 import type { z } from 'zod';
 import { db } from '@/shared/db/client';
-import { shoppingCartItems } from '@/shared/db/schema';
+import { books, shoppingCart, shoppingCartItems } from '@/shared/db/schema';
 import type {
   CreateShoppingCartItemSchema,
   CreateShoppingCartItemType,
@@ -17,60 +17,112 @@ import type {
 type ShoppingCartItemType = z.infer<typeof CreateShoppingCartItemSchema>;
 
 export class ShoppingCartService {
-  getCartSubtotal(_arg0: string) {
-    throw new Error('Method not implemented.');
+  async getCartByUserId(userId: string) {
+    const cart = await db
+      .select()
+      .from(shoppingCart)
+      .where(eq(shoppingCart.userId, userId))
+      .limit(1);
+    return cart[0];
   }
+
+  async getCartSubtotal(userId: string) {
+    const cart = await this.getCartByUserId(userId);
+    if (!cart) {
+      return 0;
+    }
+    return this.calculateCartSubtotal(cart.id);
+  }
+
   async addItemToCart(
-    item: CreateShoppingCartItemType
+    userId: string,
+    bookId: string
   ): Promise<ShoppingCartItemType[]> {
-    console.log('Adding item to cart:', item);
+    let cart = await this.getCartByUserId(userId);
+    if (!cart) {
+      const [newCart] = await db
+        .insert(shoppingCart)
+        .values({ userId })
+        .returning();
+      cart = newCart;
+    }
     const [newItem] = await db
       .insert(shoppingCartItems)
-      .values(item)
+      .values({
+        shoppingCartId: cart!.id,
+        bookId: bookId,
+      })
       .returning();
     if (!newItem) {
       throw new Error('Failed to add item to cart');
     }
-    return this.getCartItems(item.shoppingCartId);
+    return this.getCartItems(userId);
   }
 
-  async getCartItems(cartId: string): Promise<ShoppingCartItemType[]> {
+  async getCartItems(userId: string): Promise<ShoppingCartItemType[]> {
+    const cart = await this.getCartByUserId(userId);
+    if (!cart) {
+      return [];
+    }
     const items = await db
       .select()
       .from(shoppingCartItems)
-      .where(eq(shoppingCartItems.shoppingCartId, cartId));
-    return items.map((item) => ({
-      id: item.id,
-      shoppingCartId: item.shoppingCartId,
-      bookIsbn: item.bookIsbn,
-    })) as unknown as ShoppingCartItemType[];
+      .where(eq(shoppingCartItems.shoppingCartId, cart.id));
+
+    const itemsWithBooks = await Promise.all(
+      items.map(async (item) => {
+        const book = await db
+          .select()
+          .from(books)
+          .where(eq(books.id, item.bookId))
+          .limit(1);
+        return {
+          id: item.id,
+          shoppingCartId: item.shoppingCartId,
+          bookId: item.bookId,
+          price: book[0] ? parseFloat(book[0].price) : 0,
+        };
+      })
+    );
+    return itemsWithBooks as unknown as ShoppingCartItemType[];
   }
 
   async removeItemFromCart(
-    cartId: string,
-    itemId: string
+    userId: string,
+    bookId: string
   ): Promise<ShoppingCartItemType[]> {
+    const cart = await this.getCartByUserId(userId);
+    if (!cart) {
+      throw new Error('Cart not found');
+    }
     await db
       .delete(shoppingCartItems)
       .where(
         and(
-          eq(shoppingCartItems.shoppingCartId, cartId),
-          eq(shoppingCartItems.id, itemId)
+          eq(shoppingCartItems.shoppingCartId, cart.id),
+          eq(shoppingCartItems.bookId, bookId)
         )
       );
-    return this.getCartItems(cartId);
+    return this.getCartItems(userId);
   }
 
   async calculateCartSubtotal(cartId: string): Promise<number> {
-    const items = await this.getCartItems(cartId);
-    return items.reduce((subtotal, item) => {
-      // Assuming we have a way to get the price of the book by its ISBN
-      const price = this.getBookPrice(item.bookIsbn);
-      return subtotal + price;
-    }, 0);
-  }
+    const items = await db
+      .select()
+      .from(shoppingCartItems)
+      .where(eq(shoppingCartItems.shoppingCartId, cartId));
 
-  private getBookPrice(_isbn: string): number {
-    return 10; // Assume each book costs $10 for demonstration purposes
+    let subtotal = 0;
+    for (const item of items) {
+      const book = await db
+        .select()
+        .from(books)
+        .where(eq(books.id, item.bookId))
+        .limit(1);
+      if (book[0]) {
+        subtotal += parseFloat(book[0].price);
+      }
+    }
+    return subtotal;
   }
 }

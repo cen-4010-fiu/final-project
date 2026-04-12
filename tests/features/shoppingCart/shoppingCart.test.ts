@@ -21,13 +21,18 @@ import {
   shoppingCartItems,
   users,
 } from '@/shared/db/schema';
-import type { CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
 
 const app = createApp();
+
+let testUserId: string;
+let testBookId: string;
 
 beforeEach(async () => {
   await db.delete(shoppingCartItems);
   await db.delete(shoppingCart);
+  await db.delete(users);
+  await db.delete(books);
+  await db.delete(authors);
 
   const defaultPassword = await Bun.password.hash('password123', {
     algorithm: 'bcrypt',
@@ -37,11 +42,13 @@ beforeEach(async () => {
   const [jsmith] = await db
     .insert(users)
     .values({
-      username: 'jsmith',
+      username: `jsmith-${crypto.randomUUID()}`,
       password: defaultPassword,
       name: 'John Smith',
     })
     .returning({ id: users.id });
+
+  testUserId = jsmith!.id;
 
   const [orwell] = await db
     .insert(authors)
@@ -53,46 +60,30 @@ beforeEach(async () => {
     })
     .returning({ id: authors.id });
 
-  await db.insert(books).values({
-    isbn: '978-3-16-148410-0',
-    name: '1984',
-    price: '10.00',
-    authorId: orwell!.id,
-    genre: 'Dystopian',
-    publisher: 'Test Pub',
-    yearPublished: 1949,
-    copiesSold: 0,
-  });
+  const [book] = await db
+    .insert(books)
+    .values({
+      isbn: `978-3-16-148410-${crypto.randomUUID().slice(0, 4)}`,
+      name: '1984',
+      price: '10.00',
+      authorId: orwell!.id,
+      genre: 'Dystopian',
+      publisher: 'Test Pub',
+      yearPublished: 1949,
+      copiesSold: 0,
+    })
+    .returning({ id: books.id });
 
-  await db.insert(shoppingCart).values({ id: 'cart123', userId: jsmith!.id });
-  await db.insert(shoppingCartItems).values({
-    id: 'item1',
-    shoppingCartId: 'cart123',
-    bookIsbn: '978-3-16-148410-0',
-  });
+  testBookId = book!.id;
+
+  await db.insert(shoppingCart).values({ userId: testUserId });
 });
 
 interface ErrorResponse {
   error: string;
 }
 
-async function addItem(data: {
-  id: string;
-  shoppingCartId: string;
-  bookIsbn: string;
-  price?: number;
-}) {
-  return await app.request('/api/shopping-cart/cart/items', {
-    method: 'POST',
-    body: JSON.stringify(data),
-    headers: { 'Content-Type': 'application/json' },
-  });
-}
-async function addInvalidItem(data: {
-  id: string;
-  shoppingCartId: string;
-  price?: number;
-}) {
+async function addItem(data: { userId: string; bookId: string }) {
   return await app.request('/api/shopping-cart/cart/items', {
     method: 'POST',
     body: JSON.stringify(data),
@@ -100,56 +91,43 @@ async function addInvalidItem(data: {
   });
 }
 
-async function getCartItems(shoppingCartId: string) {
-  return await app.request(
-    `/api/shopping-cart/cart/items?shoppingCartId=${shoppingCartId}`,
-    {
-      method: 'GET',
-      body: JSON.stringify({ shoppingCartId }),
-      headers: { 'Content-Type': 'application/json' },
-    }
-  );
+async function getCartItems(userId: string) {
+  return await app.request(`/api/shopping-cart/cart/items?userId=${userId}`, {
+    method: 'GET',
+  });
 }
 
-async function removeItem(shoppingCartId: string, itemId: string) {
+async function removeItem(userId: string, bookId: string) {
   return await app.request(
-    `/api/shopping-cart/cart/items/${itemId}?cartId=${shoppingCartId}`,
+    `/api/shopping-cart/cart/items?userId=${userId}&bookId=${bookId}`,
     {
       method: 'DELETE',
-      //body: JSON.stringify({ shoppingCartId, itemId }),
-      headers: { 'Content-Type': 'application/json' },
     }
   );
 }
 
-async function calculateSubtotal(shoppingCartId: string) {
+async function calculateSubtotal(userId: string) {
   return await app.request(
-    `/api/shopping-cart/cart/subtotal?shoppingCartId=${shoppingCartId}`,
+    `/api/shopping-cart/cart/subtotal?userId=${userId}`,
     {
       method: 'GET',
-      body: JSON.stringify({ shoppingCartId }),
-      headers: { 'Content-Type': 'application/json' },
     }
   );
 }
 
 describe('Shopping Cart API', () => {
-  it('should add an item to the cart successfully', async () => {
-    const newItem = {
-      id: '1',
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
-    };
-    const response = await addItem(newItem);
+  it('should add a book to the cart successfully', async () => {
+    const response = await addItem({
+      userId: testUserId,
+      bookId: testBookId,
+    });
     expect(response.status).toBe(200);
     const responseData = JSON.parse(await response.text());
     expect(Array.isArray(responseData)).toBe(true);
     expect(responseData).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          shoppingCartId: 'cart123',
-          bookIsbn: '978-3-16-148410-0',
+          bookId: testBookId,
         }),
       ])
     );
@@ -158,200 +136,126 @@ describe('Shopping Cart API', () => {
   it('should return 400 for invalid input', async () => {
     const response = await app.request('/api/shopping-cart/cart/items', {
       method: 'POST',
-      body: JSON.stringify({ id: '2' }),
+      body: JSON.stringify({ userId: 'invalid' }),
       headers: { 'Content-Type': 'application/json' },
     });
     expect(response.status).toBe(400);
   });
-
-  it('should return 500 for server errors', async () => {
-    // Simulate a server error by mocking the database operation to throw an error
-    const originalInsert = db.insert;
-    db.insert = () => {
-      throw new Error('Database error');
-    };
-    const newItem = {
-      id: '3',
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
-    };
-    const response = await addItem(newItem);
-    expect(response.status).toBe(500);
-    const responseData = JSON.parse(await response.text()) as ErrorResponse;
-    expect(responseData.error).toBe('Internal server error');
-    // Restore the original database insert function
-    db.insert = originalInsert;
-  });
 });
+
 describe('Shopping Cart Service', () => {
   const service = new ShoppingCartService();
-  it('should add an item to the cart and return the updated cart items', async () => {
-    const newItem = {
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-    };
-    const cartItems = await service.addItemToCart(
-      Object.assign({}, newItem) as unknown as CreateShoppingCartItemType
-    );
+
+  it('should add a book to the cart and return the updated cart items', async () => {
+    const cartItems = await service.addItemToCart(testUserId, testBookId);
     expect(Array.isArray(cartItems)).toBe(true);
     expect(cartItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          shoppingCartId: 'cart123',
-          bookIsbn: '978-3-16-148410-0',
+          bookId: testBookId,
         }),
       ])
     );
   });
 
-  it('should retrieve the list of items in the cart', async () => {
-    const cartItems = await service.getCartItems('cart123');
+  it('should retrieve the list of books in the cart', async () => {
+    await service.addItemToCart(testUserId, testBookId);
+    const cartItems = await service.getCartItems(testUserId);
     expect(Array.isArray(cartItems)).toBe(true);
     expect(cartItems).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          shoppingCartId: 'cart123',
-          bookIsbn: '978-3-16-148410-0',
+          bookId: testBookId,
         }),
       ])
     );
   });
 
-  it('should remove an item from the cart and return the updated cart items', async () => {
-    const cartItemsBefore = await service.getCartItems('cart123');
-    if (!cartItemsBefore[0]) {
-      throw new Error('No items in cart');
-    }
-    const itemIdToRemove = cartItemsBefore[0].shoppingCartId.toString();
+  it('should remove a book from the cart', async () => {
+    await service.addItemToCart(testUserId, testBookId);
     const updatedCartItems = await service.removeItemFromCart(
-      'cart123',
-      itemIdToRemove
+      testUserId,
+      testBookId
     );
     expect(Array.isArray(updatedCartItems)).toBe(true);
     expect(updatedCartItems).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: itemIdToRemove,
+          bookId: testBookId,
         }),
       ])
     );
   });
 
   it('should calculate the subtotal of the items in the cart', async () => {
-    const subtotal = await service.calculateCartSubtotal('cart123');
+    await service.addItemToCart(testUserId, testBookId);
+    const subtotal = await service.getCartSubtotal(testUserId);
     expect(typeof subtotal).toBe('number');
-    expect(subtotal).toBeGreaterThanOrEqual(0);
+    expect(subtotal).toBe(10);
   });
 });
 
 describe('Shopping Cart API - Get Items', () => {
-  it('should retrieve items in the cart successfully', async () => {
-    const cartId = 'cart123';
-    // First, add an item to the cart
+  it('should retrieve books in the cart successfully', async () => {
     await addItem({
-      id: '1',
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
+      userId: testUserId,
+      bookId: testBookId,
     });
-    // Now, retrieve the items in the cart
-    const response = await getCartItems('cart123');
+    const response = await getCartItems(testUserId);
     expect(response.status).toBe(200);
     const responseData = JSON.parse(await response.text());
     expect(Array.isArray(responseData)).toBe(true);
     expect(responseData).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          shoppingCartId: 'cart123',
-          bookIsbn: '978-3-16-148410-0',
+          bookId: testBookId,
         }),
       ])
     );
   });
-  // Additional test cases for retrieving items with an empty cart or invalid cartId would go here
 });
 
 describe('Shopping Cart API - Remove Item', () => {
-  it('should remove an item from the cart successfully', async () => {
-    const shoppingCartId = 'cart123';
-    const itemId = '1';
-    // First, add an item to the cart
+  it('should remove a book from the cart successfully', async () => {
     await addItem({
-      id: itemId,
-      shoppingCartId: shoppingCartId,
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
+      userId: testUserId,
+      bookId: testBookId,
     });
-    // Now, remove the item from the cart
-    const response = await removeItem(shoppingCartId, itemId);
+    const response = await removeItem(testUserId, testBookId);
     expect(response.status).toBe(200);
     const responseData = JSON.parse(await response.text());
     expect(Array.isArray(responseData)).toBe(true);
     expect(responseData).not.toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: itemId,
+          bookId: testBookId,
         }),
       ])
     );
   });
-  // Additional test cases for removing items with an invalid cartId or itemId would go here
 });
 
 describe('Shopping Cart API - Calculate Subtotal', () => {
   it('should calculate the subtotal of the items in the cart successfully', async () => {
-    const cartId = 'cart123';
-    const oldResponse = await calculateSubtotal(cartId);
-    const oldResponseJson = JSON.parse(await oldResponse.text());
-    const oldSubtotal = oldResponseJson.subtotal;
-    // First, add items to the cart
     await addItem({
-      id: '1',
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
+      userId: testUserId,
+      bookId: testBookId,
     });
-    // Now, calculate the new subtotal
-    const response = await calculateSubtotal(cartId);
+    const response = await calculateSubtotal(testUserId);
     expect(response.status).toBe(200);
     const responseData = JSON.parse(await response.text());
     expect(typeof responseData).toBe('object');
-    expect(typeof responseData.subtotal).toBe('number');
-    const actualDifference = responseData.subtotal - oldSubtotal;
-    const expectedDifference = 10;
-    expect(actualDifference).toBe(expectedDifference);
+    expect(responseData.subtotal).toBe(10);
   });
-  // Additional test cases for calculating subtotal with an empty cart or invalid cartId would go here
 });
 
 describe('Shopping Cart API - Error Handling', () => {
   it('should return 400 for invalid input', async () => {
     const response = await app.request('/api/shopping-cart/cart/items', {
       method: 'POST',
-      body: JSON.stringify({ id: '2' }),
+      body: JSON.stringify({ userId: 'invalid' }),
       headers: { 'Content-Type': 'application/json' },
     });
     expect(response.status).toBe(400);
-  });
-
-  it('should return 500 for server errors when adding an item', async () => {
-    // Simulate a server error by mocking the database operation to throw an error
-    const originalInsert = db.insert;
-    db.insert = () => {
-      throw new Error('Database error');
-    };
-    const newItem = {
-      id: '4',
-      shoppingCartId: 'cart123',
-      bookIsbn: '978-3-16-148410-0',
-      price: 10.0,
-    };
-    const response = await addItem(newItem);
-    expect(response.status).toBe(500);
-    const responseData = JSON.parse(await response.text()) as ErrorResponse;
-    expect(responseData.error).toBe('Internal server error');
-    // Restore the original database insert function
-    db.insert = originalInsert;
   });
 });

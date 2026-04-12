@@ -174,7 +174,7 @@ async function seed() {
           .select({ id: authors.id, lastName: authors.lastName })
           .from(authors);
 
-  await db
+  const insertedBooks = await db
     .insert(books)
     .values([
       {
@@ -188,8 +188,38 @@ async function seed() {
         yearPublished: 1949,
         copiesSold: 500000,
       },
+      {
+        isbn: '978-0-06-112008-4',
+        name: 'To Kill a Mockingbird',
+        description: 'A novel about racial injustice in the American South.',
+        price: '15.00',
+        authorId: allAuthors[1]!.id,
+        genre: 'Fiction',
+        publisher: 'J. B. Lippincott & Co.',
+        yearPublished: 1960,
+        copiesSold: 400000,
+      },
+      {
+        isbn: '978-0-7432-7356-5',
+        name: 'The Great Gatsby',
+        description: 'A novel about the American Dream in the Jazz Age.',
+        price: '12.00',
+        authorId: allAuthors[2]!.id,
+        genre: 'Fiction',
+        publisher: "Charles Scribner's Sons",
+        yearPublished: 1925,
+        copiesSold: 300000,
+      },
     ])
-    .onConflictDoNothing();
+    .onConflictDoNothing()
+    .returning({ id: books.id, isbn: books.isbn });
+
+  const allBooks =
+    insertedBooks.length > 0
+      ? insertedBooks
+      : await db.select({ id: books.id, isbn: books.isbn }).from(books);
+
+  const bookMap = new Map(allBooks.map((b) => [b.isbn, b.id]));
 
   await db
     .insert(shoppingCart)
@@ -202,9 +232,9 @@ async function seed() {
   await db
     .insert(shoppingCartItems)
     .values([
-      { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
-      { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
-      { shoppingCartId: 'cart456', bookIsbn: '978-3-16-148410-0' },
+      { shoppingCartId: 'cart123', bookId: bookMap.get('978-3-16-148410-0')! },
+      { shoppingCartId: 'cart123', bookId: bookMap.get('978-0-06-112008-4')! },
+      { shoppingCartId: 'cart456', bookId: bookMap.get('978-3-16-148410-0')! },
     ])
     .onConflictDoNothing();
 
