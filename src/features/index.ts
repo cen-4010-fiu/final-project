@@ -4,6 +4,7 @@ import comments from './comments/routes';
 import ratings from './ratings/routes';
 import users from './users/routes';
 import wishlists from './wishlists/routes';
+import shoppingCart from './shoppingCart/routes';
 
 const app = new OpenAPIHono();
 
@@ -12,5 +13,6 @@ app.route('/books', books);
 app.route('/ratings', ratings);
 app.route('/comments', comments);
 app.route('/wishlists', wishlists);
+app.route('/shopping-cart', shoppingCart);
 
 export default app;

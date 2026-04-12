@@ -15,7 +15,7 @@ export function createApp() {
     console.warn(`[404] ${c.req.method} ${c.req.path} →  Try /docs instead`);
     return c.json(
       {
-        sucess: false,
+        success: false,
         error: {
           code: 404,
           message: `Route ${c.req.method} ${c.req.path} not found`,
