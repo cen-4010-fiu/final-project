@@ -13,7 +13,6 @@ import {
   timestamp,
   unique,
 } from 'drizzle-orm/pg-core';
-import { privateDecrypt } from 'node:crypto';
 
 /**
  * Users table

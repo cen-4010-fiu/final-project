@@ -1,16 +1,6 @@
-/**
- * Test Setup
- *
- * Global setup that runs before each test file.
- */
-
 import { beforeEach } from 'bun:test';
-import { db } from '@/shared/db/client';
-import { users } from '@/shared/db/schema';
+import { clearAllTables } from '@/shared/db/testSeed';
 
-/**
- * Reset relevant tables before each test
- */
 beforeEach(async () => {
-  await db.delete(users);
+  await clearAllTables();
 });

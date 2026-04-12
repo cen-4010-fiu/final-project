@@ -10,12 +10,67 @@
  *
  */
 
-import { describe, expect, it } from 'bun:test';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { createApp } from '@/app';
 import { ShoppingCartService } from '@/features/shoppingCart/service';
 import { db } from '@/shared/db';
+import {
+  authors,
+  books,
+  shoppingCart,
+  shoppingCartItems,
+  users,
+} from '@/shared/db/schema';
 import type { CreateShoppingCartItemType } from '@/shared/schemas/shoppingCart';
+
 const app = createApp();
+
+beforeEach(async () => {
+  await db.delete(shoppingCartItems);
+  await db.delete(shoppingCart);
+
+  const defaultPassword = await Bun.password.hash('password123', {
+    algorithm: 'bcrypt',
+    cost: 10,
+  });
+
+  const [jsmith] = await db
+    .insert(users)
+    .values({
+      username: 'jsmith',
+      password: defaultPassword,
+      name: 'John Smith',
+    })
+    .returning({ id: users.id });
+
+  const [orwell] = await db
+    .insert(authors)
+    .values({
+      firstName: 'George',
+      lastName: 'Orwell',
+      biography: 'Test author',
+      publisher: 'Test Pub',
+    })
+    .returning({ id: authors.id });
+
+  await db.insert(books).values({
+    isbn: '978-3-16-148410-0',
+    name: '1984',
+    price: '10.00',
+    authorId: orwell.id,
+    genre: 'Dystopian',
+    publisher: 'Test Pub',
+    yearPublished: 1949,
+    copiesSold: 0,
+  });
+
+  await db.insert(shoppingCart).values({ id: 'cart123', userId: jsmith.id });
+  await db.insert(shoppingCartItems).values({
+    id: 'item1',
+    shoppingCartId: 'cart123',
+    bookIsbn: '978-3-16-148410-0',
+  });
+});
 
 interface ErrorResponse {
   error: string;
@@ -45,13 +100,15 @@ async function addInvalidItem(data: {
   });
 }
 
-
 async function getCartItems(shoppingCartId: string) {
-  return await app.request(`/api/shopping-cart/cart/items?shoppingCartId=${shoppingCartId}`, {
-    method: 'GET',
-    body: JSON.stringify({ shoppingCartId }),
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return await app.request(
+    `/api/shopping-cart/cart/items?shoppingCartId=${shoppingCartId}`,
+    {
+      method: 'GET',
+      body: JSON.stringify({ shoppingCartId }),
+      headers: { 'Content-Type': 'application/json' },
+    }
+  );
 }
 
 async function removeItem(shoppingCartId: string, itemId: string) {
@@ -82,7 +139,7 @@ describe('Shopping Cart API', () => {
       id: '1',
       shoppingCartId: 'cart123',
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(200);
@@ -117,7 +174,7 @@ describe('Shopping Cart API', () => {
       id: '3',
       shoppingCartId: 'cart123',
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(500);
@@ -187,7 +244,7 @@ describe('Shopping Cart Service', () => {
     expect(subtotal).toBeGreaterThanOrEqual(0);
   });
 });
- 
+
 describe('Shopping Cart API - Get Items', () => {
   it('should retrieve items in the cart successfully', async () => {
     const cartId = 'cart123';
@@ -196,7 +253,7 @@ describe('Shopping Cart API - Get Items', () => {
       id: '1',
       shoppingCartId: 'cart123',
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     });
     // Now, retrieve the items in the cart
     const response = await getCartItems('cart123');
@@ -214,7 +271,7 @@ describe('Shopping Cart API - Get Items', () => {
   });
   // Additional test cases for retrieving items with an empty cart or invalid cartId would go here
 });
- 
+
 describe('Shopping Cart API - Remove Item', () => {
   it('should remove an item from the cart successfully', async () => {
     const shoppingCartId = 'cart123';
@@ -224,7 +281,7 @@ describe('Shopping Cart API - Remove Item', () => {
       id: itemId,
       shoppingCartId: shoppingCartId,
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     });
     // Now, remove the item from the cart
     const response = await removeItem(shoppingCartId, itemId);
@@ -253,7 +310,7 @@ describe('Shopping Cart API - Calculate Subtotal', () => {
       id: '1',
       shoppingCartId: 'cart123',
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     });
     // Now, calculate the new subtotal
     const response = await calculateSubtotal(cartId);
@@ -276,8 +333,8 @@ describe('Shopping Cart API - Error Handling', () => {
       headers: { 'Content-Type': 'application/json' },
     });
     expect(response.status).toBe(400);
-});
-  
+  });
+
   it('should return 500 for server errors when adding an item', async () => {
     // Simulate a server error by mocking the database operation to throw an error
     const originalInsert = db.insert;
@@ -288,7 +345,7 @@ describe('Shopping Cart API - Error Handling', () => {
       id: '4',
       shoppingCartId: 'cart123',
       bookIsbn: '978-3-16-148410-0',
-      price: 10.00,
+      price: 10.0,
     };
     const response = await addItem(newItem);
     expect(response.status).toBe(500);

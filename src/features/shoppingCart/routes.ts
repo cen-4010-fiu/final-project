@@ -69,7 +69,7 @@ app.openapi(
       }
       const updatedCartItems = await shoppingCartService.addItemToCart({
         shoppingCartId,
-        bookIsbn
+        bookIsbn,
       });
       return c.json(updatedCartItems, 200);
     } catch (_error) {
@@ -230,7 +230,7 @@ app.openapi(
             schema: ErrorSchema,
           },
         },
-      },  
+      },
     },
   }),
   async (c) => {
@@ -239,7 +239,8 @@ app.openapi(
       if (!shoppingCartId) {
         return c.json({ error: 'Invalid cart ID' }, 400);
       }
-      const subtotal = await shoppingCartService.calculateCartSubtotal(shoppingCartId);
+      const subtotal =
+        await shoppingCartService.calculateCartSubtotal(shoppingCartId);
       return c.json({ subtotal }, 200);
     } catch (_error) {
       return c.json({ error: 'Internal server error' }, 500);

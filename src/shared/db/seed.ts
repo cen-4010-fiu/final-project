@@ -6,7 +6,14 @@
  */
 
 import { db } from './client';
-import { authors, books, creditCards, shoppingCart, shoppingCartItems, users } from './schema';
+import {
+  authors,
+  books,
+  creditCards,
+  shoppingCart,
+  shoppingCartItems,
+  users,
+} from './schema';
 
 /** Hash password using same config as service */
 async function hashPassword(password: string): Promise<string> {
@@ -68,9 +75,10 @@ async function seed() {
   console.log('Seeded users:', insertedUsers.map((u) => u.username).join(', '));
 
   // Create a map for easy lookup
-  const allUsers = insertedUsers.length > 0
-    ? insertedUsers
-    : await db.select({ id: users.id, username: users.username }).from(users);
+  const allUsers =
+    insertedUsers.length > 0
+      ? insertedUsers
+      : await db.select({ id: users.id, username: users.username }).from(users);
 
   // Create a map for easy lookup
   const userMap = new Map(allUsers.map((u) => [u.username, u.id]));
@@ -111,14 +119,17 @@ async function seed() {
     const userId = userMap.get(card.username);
     if (!userId) continue;
 
-    await db.insert(creditCards).values({
-      userId,
-      cardholderName: card.cardholderName,
-      lastFour: card.cardNumber.slice(-4),
-      cardNumberHash: await hashCardData(card.cardNumber),
-      expiryDate: card.expiryDate,
-      cvvHash: await hashCardData(card.cvv),
-    }).onConflictDoNothing();
+    await db
+      .insert(creditCards)
+      .values({
+        userId,
+        cardholderName: card.cardholderName,
+        lastFour: card.cardNumber.slice(-4),
+        cardNumberHash: await hashCardData(card.cardNumber),
+        expiryDate: card.expiryDate,
+        cvvHash: await hashCardData(card.cvv),
+      })
+      .onConflictDoNothing();
   }
 
   console.log(`Seeded ${cardData.length} credit cards`);
@@ -131,7 +142,7 @@ async function seed() {
   console.log('  mwilson: 6011111111111117 (Discover)');
   console.log('Done!');
 
-const insertedAuthors = await db
+  const insertedAuthors = await db
     .insert(authors)
     .values([
       {
@@ -150,44 +161,54 @@ const insertedAuthors = await db
         firstName: 'F. Scott',
         lastName: 'Fitzgerald',
         biography: 'American novelist of the Jazz Age.',
-        publisher: 'Charles Scribner\'s Sons',
+        publisher: "Charles Scribner's Sons",
       },
     ])
     .onConflictDoNothing()
     .returning({ id: authors.id, lastName: authors.lastName });
-    
-const allAuthors = insertedAuthors.length > 0
-    ? insertedAuthors
-    : await db.select({ id: authors.id, lastName: authors.lastName }).from(authors);
 
-await db.insert(books).values([
-    {
-      isbn: '978-3-16-148410-0',
-      name: '1984',
-      description: 'A dystopian novel set in a totalitarian society.',
-      price: '10.00',
-      authorId: allAuthors[0]!.id,
-      genre: 'Dystopian',
-      publisher: 'Secker & Warburg',
-      yearPublished: 1949,
-      copiesSold: 500000,
-    }]).onConflictDoNothing();
+  const allAuthors =
+    insertedAuthors.length > 0
+      ? insertedAuthors
+      : await db
+          .select({ id: authors.id, lastName: authors.lastName })
+          .from(authors);
 
-const insertedCarts = await db
+  await db
+    .insert(books)
+    .values([
+      {
+        isbn: '978-3-16-148410-0',
+        name: '1984',
+        description: 'A dystopian novel set in a totalitarian society.',
+        price: '10.00',
+        authorId: allAuthors[0]!.id,
+        genre: 'Dystopian',
+        publisher: 'Secker & Warburg',
+        yearPublished: 1949,
+        copiesSold: 500000,
+      },
+    ])
+    .onConflictDoNothing();
+
+  await db
     .insert(shoppingCart)
     .values([
       { id: 'cart123', userId: userMap.get('jsmith')! },
       { id: 'cart456', userId: userMap.get('agarcia')! },
     ])
-    .onConflictDoNothing()
-    .returning({ id: shoppingCart.id });
-  // Create a map for easy lookup
-await db.insert(shoppingCartItems).values([
-    { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
-    { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
-    { shoppingCartId: 'cart456', bookIsbn: '978-3-16-148410-0' },
-  ]).onConflictDoNothing();
+    .onConflictDoNothing();
 
+  await db
+    .insert(shoppingCartItems)
+    .values([
+      { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
+      { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
+      { shoppingCartId: 'cart456', bookIsbn: '978-3-16-148410-0' },
+    ])
+    .onConflictDoNothing();
+
+  process.exit(0);
 }
 
 seed().catch((err) => {
