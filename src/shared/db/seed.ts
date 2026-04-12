@@ -6,7 +6,7 @@
  */
 
 import { db } from './client';
-import { creditCards, users } from './schema';
+import { authors, books, creditCards, shoppingCart, shoppingCartItems, users } from './schema';
 
 /** Hash password using same config as service */
 async function hashPassword(password: string): Promise<string> {
@@ -63,12 +63,17 @@ async function seed() {
         homeAddress: '654 Maple Dr, Gainesville, FL 32601',
       },
     ])
+    .onConflictDoNothing()
     .returning({ id: users.id, username: users.username });
-
   console.log('Seeded users:', insertedUsers.map((u) => u.username).join(', '));
 
   // Create a map for easy lookup
-  const userMap = new Map(insertedUsers.map((u) => [u.username, u.id]));
+  const allUsers = insertedUsers.length > 0
+    ? insertedUsers
+    : await db.select({ id: users.id, username: users.username }).from(users);
+
+  // Create a map for easy lookup
+  const userMap = new Map(allUsers.map((u) => [u.username, u.id]));
 
   // Seed credit cards for some users
   const cardData = [
@@ -113,7 +118,7 @@ async function seed() {
       cardNumberHash: await hashCardData(card.cardNumber),
       expiryDate: card.expiryDate,
       cvvHash: await hashCardData(card.cvv),
-    });
+    }).onConflictDoNothing();
   }
 
   console.log(`Seeded ${cardData.length} credit cards`);
@@ -125,7 +130,64 @@ async function seed() {
   console.log('  agarcia: 4111111111111111 (Visa)');
   console.log('  mwilson: 6011111111111117 (Discover)');
   console.log('Done!');
-  process.exit(0);
+
+const insertedAuthors = await db
+    .insert(authors)
+    .values([
+      {
+        firstName: 'George',
+        lastName: 'Orwell',
+        biography: 'English novelist and essayist.',
+        publisher: 'Secker & Warburg',
+      },
+      {
+        firstName: 'Harper',
+        lastName: 'Lee',
+        biography: 'American novelist known for To Kill a Mockingbird.',
+        publisher: 'J. B. Lippincott & Co.',
+      },
+      {
+        firstName: 'F. Scott',
+        lastName: 'Fitzgerald',
+        biography: 'American novelist of the Jazz Age.',
+        publisher: 'Charles Scribner\'s Sons',
+      },
+    ])
+    .onConflictDoNothing()
+    .returning({ id: authors.id, lastName: authors.lastName });
+    
+const allAuthors = insertedAuthors.length > 0
+    ? insertedAuthors
+    : await db.select({ id: authors.id, lastName: authors.lastName }).from(authors);
+
+await db.insert(books).values([
+    {
+      isbn: '978-3-16-148410-0',
+      name: '1984',
+      description: 'A dystopian novel set in a totalitarian society.',
+      price: '10.00',
+      authorId: allAuthors[0]!.id,
+      genre: 'Dystopian',
+      publisher: 'Secker & Warburg',
+      yearPublished: 1949,
+      copiesSold: 500000,
+    }]).onConflictDoNothing();
+
+const insertedCarts = await db
+    .insert(shoppingCart)
+    .values([
+      { id: 'cart123', userId: userMap.get('jsmith')! },
+      { id: 'cart456', userId: userMap.get('agarcia')! },
+    ])
+    .onConflictDoNothing()
+    .returning({ id: shoppingCart.id });
+  // Create a map for easy lookup
+await db.insert(shoppingCartItems).values([
+    { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
+    { shoppingCartId: 'cart123', bookIsbn: '978-3-16-148410-0' },
+    { shoppingCartId: 'cart456', bookIsbn: '978-3-16-148410-0' },
+  ]).onConflictDoNothing();
+
 }
 
 seed().catch((err) => {

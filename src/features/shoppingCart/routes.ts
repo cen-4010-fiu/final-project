@@ -63,15 +63,13 @@ app.openapi(
   }),
   async (c) => {
     try {
-      const { cartId, isbn } = c.req.valid('json');
-      if (!cartId || !isbn) {
+      const { shoppingCartId, bookIsbn } = c.req.valid('json');
+      if (!shoppingCartId || !bookIsbn) {
         return c.json({ error: 'Invalid request data' }, 400);
       }
       const updatedCartItems = await shoppingCartService.addItemToCart({
-        cartId,
-        isbn,
-        shoppingCartId: '',
-        bookIsbn: ''
+        shoppingCartId,
+        bookIsbn
       });
       return c.json(updatedCartItems, 200);
     } catch (_error) {
@@ -117,11 +115,11 @@ app.openapi(
   }),
   async (c) => {
     try {
-      const { cartId } = c.req.query();
-      if (!cartId) {
+      const { shoppingCartId } = c.req.query();
+      if (!shoppingCartId) {
         return c.json({ error: 'Invalid cart ID' }, 400);
       }
-      const cartItems = await shoppingCartService.getCartItems(cartId);
+      const cartItems = await shoppingCartService.getCartItems(shoppingCartId);
       return c.json(cartItems, 200);
     } catch (_error) {
       return c.json({ error: 'Internal server error' }, 500);
@@ -237,11 +235,11 @@ app.openapi(
   }),
   async (c) => {
     try {
-      const { cartId } = c.req.query();
-      if (!cartId) {
+      const { shoppingCartId } = c.req.query();
+      if (!shoppingCartId) {
         return c.json({ error: 'Invalid cart ID' }, 400);
       }
-      const subtotal = await shoppingCartService.calculateCartSubtotal(cartId);
+      const subtotal = await shoppingCartService.calculateCartSubtotal(shoppingCartId);
       return c.json({ subtotal }, 200);
     } catch (_error) {
       return c.json({ error: 'Internal server error' }, 500);

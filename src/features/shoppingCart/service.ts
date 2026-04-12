@@ -23,6 +23,7 @@ export class ShoppingCartService {
   async addItemToCart(
     item: CreateShoppingCartItemType
   ): Promise<ShoppingCartItemType[]> {
+    console.log('Adding item to cart:', item);
     const [newItem] = await db
       .insert(shoppingCartItems)
       .values(item)
@@ -30,7 +31,7 @@ export class ShoppingCartService {
     if (!newItem) {
       throw new Error('Failed to add item to cart');
     }
-    return this.getCartItems(item.cartId);
+    return this.getCartItems(item.shoppingCartId);
   }
 
   async getCartItems(cartId: string): Promise<ShoppingCartItemType[]> {
@@ -41,7 +42,7 @@ export class ShoppingCartService {
     return items.map((item) => ({
       id: item.id,
       shoppingCartId: item.shoppingCartId,
-      isbn: item.bookIsbn,
+      bookIsbn: item.bookIsbn,
     })) as unknown as ShoppingCartItemType[];
   }
 
@@ -64,7 +65,7 @@ export class ShoppingCartService {
     const items = await this.getCartItems(cartId);
     return items.reduce((subtotal, item) => {
       // Assuming we have a way to get the price of the book by its ISBN
-      const price = this.getBookPrice(item.isbn);
+      const price = this.getBookPrice(item.bookIsbn);
       return subtotal + price;
     }, 0);
   }

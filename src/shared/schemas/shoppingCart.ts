@@ -11,8 +11,6 @@ export const ShoppingCartItemListSchema = z
 export const CreateShoppingCartItemSchema = baseInsertSchema
   .omit({ id: true })
   .extend({
-    cartId: z.string(),
-    isbn: z.string(),
     price: z.number().optional(),
   })
   .openapi('CreateShoppingCartItem');
